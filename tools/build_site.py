@@ -16,6 +16,8 @@ WEB = "web"
 SITE_URL = os.environ.get("SITE_URL", "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", "").strip()
 FONT = os.environ.get("OG_FONT", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "").strip()  # the public "anon" key, safe to put in web pages
 FEE = 0.03
 
 ROOT_PATH = re.sub(r"^https?://[^/]+", "", SITE_URL) or "/"
@@ -61,6 +63,8 @@ for lst in by_cat.values():
 
 def config(base, slug=None):
     cfg = {"marketUrl": base + "market.json", "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
+    if SUPABASE_URL and SUPABASE_KEY:
+        cfg.update(supabaseUrl=SUPABASE_URL, supabaseKey=SUPABASE_KEY)
     if slug:
         cfg["item"] = slug
     return "<script>window.MESO_CONFIG = %s;</script>" % json.dumps(cfg)

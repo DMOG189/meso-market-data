@@ -1,0 +1,50 @@
+# Sends MapleCharts notifications: price alerts (when prices change) and web push for new matches and messages.
+# Needs the repository secret SUPABASE_SERVICE_KEY and the variable SUPABASE_URL; does nothing until they are set.
+name: Notify
+
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SITE_URL: ${{ vars.SITE_URL || 'https://dmog189.github.io/meso-market-data/' }}
+    steps:
+      - name: Check setup
+        id: setup
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "Supabase is not set up yet."; echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.setup.outputs.ready == 'true'
+      - name: Get the latest prices
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          git fetch --depth=1 origin data
+          git show FETCH_HEAD:market.json > market.json
+      - uses: actions/setup-python@v5
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install
+        if: steps.setup.outputs.ready == 'true'
+        run: pip install --quiet "pywebpush>=1.14,<3" "cryptography>=41"
+      - name: Send
+        if: steps.setup.outputs.ready == 'true'
+        run: python3 tools/notify.py market.json
