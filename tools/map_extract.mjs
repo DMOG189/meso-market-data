@@ -4,7 +4,7 @@
 // Usage: node tools/map_extract.mjs data/npc-shops.json data/maps.json [version]
 import fs from "node:fs";
 
-const [shopsPath = "data/npc-shops.json", outPath = "data/maps.json", VERSION = "62"] = process.argv.slice(2);
+const [shopsPath = "data/npc-shops.json", outPath = "data/maps.json", VERSION = "75"] = process.argv.slice(2);
 const API = `https://maplestory.io/api/GMS/${VERSION}`;
 const TOWNS = ["Amherst", "Southperry", "Lith Harbor", "Henesys", "Ellinia", "Perion", "Kerning City", "Sleepywood", "Florina Beach"];
 const WORLD = { "Maple Island": "WorldMap00", "Victoria Island": "WorldMap10" };
@@ -119,49 +119,77 @@ for (const t of TOWNS) {
   out.towns[t] = { id, island };
 }
 
-// 3. For every shop, walk from its town through portals (up to 3 steps) to find the shop's map and NPC.
+// 3. Locate every shop: find the NPC (or the shop's map by name), then walk the doors back to the town.
 function addMap(lay) { if (lay && !out.maps[lay.id]) out.maps[lay.id] = lay; }
+const npcList = (await get("/npc")) || [];
+const mapList = (await get("/map")) || [];
+const npcIdsByName = new Map();
+for (const n of npcList) { const k = norm(n.name); if (!npcIdsByName.has(k)) npcIdsByName.set(k, []); npcIdsByName.get(k).push(n.id); }
+const mapIdsByName = new Map();
+for (const m of mapList) { const k = norm(m.name); if (!mapIdsByName.has(k)) mapIdsByName.set(k, []); mapIdsByName.get(k).push(m.id); }
+
+// Shortest walk from `from` to the town over doors in either direction (doors are sometimes listed one way only).
+async function walkToTown(from, townId, limit = 45) {
+  const prev = new Map([[from, null]]);
+  let frontier = [from], fetched = 0;
+  for (let depth = 0; depth < 5 && frontier.length; depth++) {
+    const next = [];
+    for (const id of frontier) {
+      if (id === townId) {
+        const path = [];
+        for (let x = id; x != null; x = prev.get(x)) path.push(x);
+        return path; // town ... from
+      }
+      if (fetched++ > limit) return null;
+      const lay = await layout(id);
+      if (!lay) continue;
+      for (const d of lay.doors) if (!prev.has(d.to)) { prev.set(d.to, id); next.push(d.to); }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
 for (const t of Object.keys(out.towns)) {
   const townId = out.towns[t].id;
-  const want = shops.filter((s) => s.town === t);
   const townLay = await layout(townId);
   addMap(townLay);
-  const parent = new Map([[townId, null]]);
-  let frontier = [townId];
-  const found = new Map();
-  for (let depth = 0; depth <= 3 && frontier.length && found.size < want.length; depth++) {
-    const lays = await pool(frontier, 6, (id) => (id === townId ? townLay : layout(id)));
-    const nextIds = [];
-    for (const lay of lays) {
-      if (!lay) continue;
-      for (const s of want) {
-        if (found.has(s.npc)) continue;
-        const npc = lay.npcs.find((n) => norm(n.name) === norm(s.npc));
-        const mapMatch = norm(lay.name) === norm(s.map);
-        if (npc || mapMatch) found.set(s.npc, { lay, npc: npc || null, mapMatch });
-      }
-      if (parent.size < 70) for (const d of lay.doors) if (!parent.has(d.to)) { parent.set(d.to, lay.id); nextIds.push(d.to); }
-    }
-    frontier = nextIds;
-  }
-  for (const s of want) {
-    const f = found.get(s.npc);
+  for (const s of shops.filter((x) => x.town === t)) {
     const rec = { npc: s.npc, town: t, map: s.map, townMap: townId };
-    if (f) {
-      addMap(f.lay);
-      rec.mapId = f.lay.id;
-      rec.mapName = f.lay.name;
-      if (f.npc) rec.at = { x: f.npc.x, y: f.npc.y };
-      // Path back to the town and the door on the town map that leads toward the shop.
-      const path = [];
-      for (let id = f.lay.id; id != null; id = parent.get(id)) path.unshift(id);
-      rec.path = path;
-      if (path.length > 1) {
-        const firstHop = path[1];
-        const door = townLay.doors.find((d) => d.to === firstHop);
+    // Candidate maps: where an NPC with this name stands, then maps with the shop's name.
+    const cands = [];
+    for (const nid of npcIdsByName.get(norm(s.npc)) || []) {
+      const info = await get(`/npc/${nid}`);
+      for (const f of info?.foundAt || []) if (f && f.id) cands.push({ id: f.id, npcId: nid, nameMatch: norm(f.name) === norm(s.map) });
+    }
+    for (const mid of mapIdsByName.get(norm(s.map)) || []) cands.push({ id: mid, npcId: null, nameMatch: true });
+    cands.sort((a, b) => (b.nameMatch && b.npcId ? 2 : b.npcId ? 1 : 0) - (a.nameMatch && a.npcId ? 2 : a.npcId ? 1 : 0));
+    let best = null;
+    for (const c of cands.slice(0, 6)) {
+      const path = c.id === townId ? [townId] : await walkToTown(c.id, townId);
+      if (path) { best = { ...c, path }; break; }
+    }
+    if (best) {
+      const lay = await layout(best.id);
+      addMap(lay);
+      rec.mapId = best.id;
+      rec.mapName = lay?.name || s.map;
+      const npc = lay?.npcs.find((n) => (best.npcId ? n.id === best.npcId : norm(n.name) === norm(s.npc)));
+      if (npc) rec.at = { x: npc.x, y: npc.y };
+      rec.path = best.path;
+      rec.pathNames = await Promise.all(best.path.map((id) => mapName(id)));
+      if (best.path.length > 1) {
+        const hop = best.path[1];
+        let door = townLay.doors.find((d) => d.to === hop);
+        if (!door) {
+          // The town doesn't list this door; use the hop map's door back into town, matched by portal name.
+          const raw = await rawMap(hop);
+          const back = (raw?.portals || []).find((p) => p && p.toMap === townId && p.toName);
+          const townRaw = await rawMap(townId);
+          const tp = back && (townRaw?.portals || []).find((p) => p && p.portalName === back.toName);
+          if (tp) door = { x: tp.x, y: tp.y };
+        }
         if (door) rec.entry = { x: door.x, y: door.y };
-        // Keep the in-between maps too, for "go through" directions.
-        for (const id of path.slice(1, -1)) addMap(await layout(id));
       }
     } else {
       console.warn("not found:", s.npc, "/", s.map, "in", t);
