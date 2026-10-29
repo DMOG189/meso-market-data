@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: wiki-data
@@ -35,3 +36,4 @@ jobs:
           git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "Wiki data $(date -u +%Y-%m-%d)"
           git push -q
+          GH_TOKEN="${{ github.token }}" gh workflow run pages.yml --repo "${GITHUB_REPOSITORY}" --ref main

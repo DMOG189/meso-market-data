@@ -1,0 +1,62 @@
+# Builds and publishes the MapleCharts website on GitHub Pages: the app, one page per item, share images,
+# a sitemap and the latest prices. Runs when the page code or game data changes, and when "Copy prices"
+# finds new prices (it starts this workflow).
+name: Build site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'tools/build_site.py'
+      - 'data/wiki.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5,17 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://dmog189.github.io/meso-market-data/' }}
+      SITE_DOMAIN: ${{ vars.SITE_DOMAIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the latest prices
+        run: |
+          git fetch --depth=1 origin data
+          git show FETCH_HEAD:market.json > market.json
+          python3 -c "import json; d=json.load(open('market.json')); print('prices from', d['updatedAt'], 'items', len(d['items']))"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow for share images
+        run: pip install --quiet pillow==11.0.0
+      - name: Get the Fredoka font (SIL Open Font License)
+        run: curl -fsSL --retry 2 -o Fredoka.ttf "https://github.com/google/fonts/raw/main/ofl/fredoka/Fredoka%5Bwdth%2Cwght%5D.ttf" || echo "Font not available; share images use the system font."
+      - name: Build the site
+        run: OG_FONT=Fredoka.ttf python3 tools/build_site.py market.json _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

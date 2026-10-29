@@ -1,21 +1,19 @@
-# meso-market-data
+# MapleCharts (Meso Market) data and website
 
-Price relay for the **Meso Market** page (MapleStory Classic World, NPC prices vs Free Market prices).
+Code and data behind **MapleCharts**: NPC shop prices vs player Free Market prices for MapleStory Classic World,
+with price charts, a market index, NPC flips, crafting profits and calculators. Unofficial fan project, not affiliated with Nexon.
 
-Every 15 minutes a GitHub Action copies the public price file from
-[maplestory-classic.com](https://maplestory-classic.com/market) (`market.json`) to the `data` branch,
-so a web page on another site can read it:
+## What runs here
+
+| Workflow | When | What it does |
+|---|---|---|
+| **Copy prices** | every 15 minutes | Copies the public price file from [maplestory-classic.com](https://maplestory-classic.com/market) to the `data` branch, and starts **Build site** when the prices changed. |
+| **Wiki data** | every Monday | Collects NPC sell prices, potion recovery, scroll success rates, crafting recipes and monster drops from [MapleClassic Wiki](https://mapleclassic.wiki) (CC BY-NC-SA 4.0) into `data/wiki.json`. |
+| **Build site** | after new prices, code or wiki changes | Builds the website with `tools/build_site.py`: the app, one page per item, share images, a sitemap and the latest prices, and publishes it on GitHub Pages. |
 
 - Prices: `https://raw.githubusercontent.com/DMOG189/meso-market-data/data/market.json`
-- When it was last copied: `https://raw.githubusercontent.com/DMOG189/meso-market-data/data/meta.json`
+- `web/` holds the built app and page template (made by `tools/build_pages.py` in the MapleCharts project).
+- `site/` holds the older build used by the Wix page.
 
-Only the newest copy is kept. The prices themselves come from maplestory-classic.com, which collects real
-Free Market sales and updates about once a day. Unofficial fan project, not affiliated with Nexon.
-
-To copy right now: **Actions → Copy prices → Run workflow**.
-
-## Page code
-
-`site/app.min.js` and `site/app.min.css` are the built code of the Meso Market web page. The page on Wix loads
-them from jsDelivr, pinned to a commit and checked with an integrity hash, so changing these files does not
-change the live page until its `index.html` points at the new commit.
+Repository variables: `SITE_URL` (public address, e.g. `https://maplecharts.com/`) and `SITE_DOMAIN`
+(custom domain for GitHub Pages, e.g. `maplecharts.com`).
