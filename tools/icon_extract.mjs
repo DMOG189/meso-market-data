@@ -62,17 +62,21 @@ if (missing.length) {
   for (const n of missing) { const id = byName.get(norm(n)); if (id) ids.set(norm(n), id); }
 }
 
-// 3. Download icons we don't have yet.
+// 3. Download icons we don't have yet, or that came from an older source than Classic World's own data
+//    (Classic World numbers some items differently, so an older source can show the wrong picture).
 fs.mkdirSync("icons", { recursive: true });
-const want = [...new Set(ids.values())].filter((id) => !fs.existsSync(`icons/${id}.png`));
+const SRC_FILE = "data/icon-sources.json";
+const iconSrc = fs.existsSync(SRC_FILE) ? JSON.parse(fs.readFileSync(SRC_FILE, "utf8")) : {};
+const want = [...new Set(ids.values())].filter((id) => !fs.existsSync(`icons/${id}.png`) || !String(iconSrc[id] || "").startsWith("MCW"));
 let got = 0, failed = 0;
 await pool(want, 6, async (id) => {
   for (const v of SOURCES) {
     const png = await get(`${API}${v}/item/${id}/icon`, "bin");
-    if (png && png.length > 60 && png[0] === 0x89 && png[1] === 0x50) { fs.writeFileSync(`icons/${id}.png`, png); got++; return; }
+    if (png && png.length > 60 && png[0] === 0x89 && png[1] === 0x50) { fs.writeFileSync(`icons/${id}.png`, png); iconSrc[id] = v; got++; return; }
   }
   failed++;
 });
+fs.writeFileSync(SRC_FILE, JSON.stringify(iconSrc));
 
 const out = {};
 for (const [k, id] of [...ids.entries()].sort()) if (fs.existsSync(`icons/${id}.png`)) out[k] = id;
