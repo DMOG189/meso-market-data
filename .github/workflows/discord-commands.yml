@@ -1,5 +1,6 @@
 # Registers the MapleCharts Discord bot's /price command. Run it once by hand after creating the Discord application.
-# Needs the secrets DISCORD_APP_ID and DISCORD_BOT_TOKEN.
+# Needs the secret DISCORD_BOT_TOKEN. The application ID comes from site.config.json (discordAppId) or the
+# DISCORD_APP_ID secret.
 name: Discord commands
 
 on:
@@ -13,12 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
       - name: Register /price
         env:
           APP_ID: ${{ secrets.DISCORD_APP_ID }}
           TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          if [ -z "$APP_ID" ] || [ -z "$TOKEN" ]; then echo "Set DISCORD_APP_ID and DISCORD_BOT_TOKEN first."; exit 1; fi
+          if [ -z "$APP_ID" ]; then APP_ID=$(python3 -c "import json; print(json.load(open('site.config.json')).get('discordAppId',''))"); fi
+          if [ -z "$APP_ID" ] || [ -z "$TOKEN" ]; then echo "Set discordAppId in site.config.json and the DISCORD_BOT_TOKEN secret first."; exit 1; fi
           curl -fsS -X PUT "https://discord.com/api/v10/applications/${APP_ID}/commands" \
             -H "Authorization: Bot ${TOKEN}" -H "Content-Type: application/json" \
             -d '[{"name":"price","type":1,"description":"MapleStory Classic World price: players vs NPC shops","options":[{"name":"item","description":"Item name","type":3,"required":true,"autocomplete":true}]}]' \
