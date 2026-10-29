@@ -3,5 +3,11 @@
   "siteDomain": "",
   "supabaseUrl": "https://ozxdsakjztpbwfeerdey.supabase.co",
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96eGRzYWtqenRwYndmZWVyZGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyOTIyNzQsImV4cCI6MjEwODg2ODI3NH0.YWJE9nRwpbvGvRuaD-Ed3YA-raRc2O7EgkDGmIJ9Tb4",
-  "discordAppId": "1565424916155727972"
+  "discordAppId": "1565424916155727972",
+  "adsenseClient": "",
+  "adSlots": {
+    "list": "",
+    "sheet": "",
+    "market": ""
+  }
 }

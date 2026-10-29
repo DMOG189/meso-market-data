@@ -19,6 +19,9 @@ SITE_DOMAIN = (os.environ.get("SITE_DOMAIN") or CONF.get("siteDomain") or "").st
 FONT = os.environ.get("OG_FONT", "")
 SUPABASE_URL = (os.environ.get("SUPABASE_URL") or CONF.get("supabaseUrl") or "").strip()
 SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or CONF.get("supabaseAnonKey") or "").strip()  # public "anon" key, meant for web pages
+# Ads stay off until an AdSense publisher ID (ca-pub-…) and ad unit IDs are set in site.config.json.
+ADS_CLIENT = (CONF.get("adsenseClient") or "").strip()
+ADS_SLOTS = {k: str(v) for k, v in (CONF.get("adSlots") or {}).items() if v}
 FEE = 0.03
 
 ROOT_PATH = re.sub(r"^https?://[^/]+", "", SITE_URL) or "/"
@@ -72,6 +75,8 @@ def config(base, slug=None):
         cfg["mapsUrl"] = base + "maps-data.js?v=" + MAPS_V
     if SUPABASE_URL and SUPABASE_KEY:
         cfg.update(supabaseUrl=SUPABASE_URL, supabaseKey=SUPABASE_KEY)
+    if ADS_CLIENT:
+        cfg["ads"] = {"client": ADS_CLIENT, "slots": ADS_SLOTS}
     if slug:
         cfg["item"] = slug
     return "<script>window.MESO_CONFIG = %s;</script>" % json.dumps(cfg)
@@ -171,6 +176,8 @@ for f in os.listdir(WEB):
     if os.path.isfile(src):
         shutil.copy(src, os.path.join(OUT, f))
 shutil.copy(MARKET, os.path.join(OUT, "market.json"))
+if ADS_CLIENT:
+    open(os.path.join(OUT, "ads.txt"), "w").write("google.com, %s, DIRECT, f08c47fec0942fa0\n" % ADS_CLIENT.replace("ca-", ""))
 
 home_title = "MapleCharts: MapleStory Classic World prices, NPC vs Free Market"
 home_desc = ("Every item in MapleStory Classic World: NPC shop price vs player Free Market price, price charts, "
