@@ -1,5 +1,5 @@
 # Sends MapleCharts notifications: price alerts (when prices change) and web push for new matches and messages.
-# Needs the repository secret SUPABASE_SERVICE_KEY and the variable SUPABASE_URL; does nothing until they are set.
+# Needs the repository secret SUPABASE_SERVICE_KEY and supabaseUrl in site.config.json; does nothing until they are set.
 name: Notify
 
 on:
@@ -19,14 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-      SITE_URL: ${{ vars.SITE_URL || 'https://dmog189.github.io/meso-market-data/' }}
     steps:
       - name: Check setup
         id: setup
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+          if [ -z "$SUPABASE_SERVICE_KEY" ]; then
             echo "Supabase is not set up yet."; echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"

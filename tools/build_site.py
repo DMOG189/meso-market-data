@@ -13,11 +13,12 @@ import datetime, html, json, os, re, shutil, sys
 MARKET = sys.argv[1] if len(sys.argv) > 1 else "market.json"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "_site"
 WEB = "web"
-SITE_URL = os.environ.get("SITE_URL", "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
-SITE_DOMAIN = os.environ.get("SITE_DOMAIN", "").strip()
+CONF = json.load(open("site.config.json")) if os.path.exists("site.config.json") else {}
+SITE_URL = (os.environ.get("SITE_URL") or CONF.get("siteUrl") or "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
+SITE_DOMAIN = (os.environ.get("SITE_DOMAIN") or CONF.get("siteDomain") or "").strip()
 FONT = os.environ.get("OG_FONT", "")
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "").strip()  # the public "anon" key, safe to put in web pages
+SUPABASE_URL = (os.environ.get("SUPABASE_URL") or CONF.get("supabaseUrl") or "").strip()
+SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or CONF.get("supabaseAnonKey") or "").strip()  # public "anon" key, meant for web pages
 FEE = 0.03
 
 ROOT_PATH = re.sub(r"^https?://[^/]+", "", SITE_URL) or "/"

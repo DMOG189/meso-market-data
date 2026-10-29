@@ -9,9 +9,10 @@ Usage: python3 tools/notify.py market.json
 """
 import base64, datetime, json, os, sys, urllib.parse, urllib.request
 
-URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+CONF = json.load(open("site.config.json")) if os.path.exists("site.config.json") else {}
+URL = (os.environ.get("SUPABASE_URL") or CONF.get("supabaseUrl") or "").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
-SITE_URL = os.environ.get("SITE_URL", "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
+SITE_URL = (os.environ.get("SITE_URL") or CONF.get("siteUrl") or "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
 CONTACT = os.environ.get("VAPID_CONTACT", "mailto:maplecharts@users.noreply.github.com")
 if not URL or not KEY:
     print("Supabase is not set up yet; nothing to do.")

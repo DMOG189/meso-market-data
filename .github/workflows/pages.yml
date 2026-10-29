@@ -9,6 +9,7 @@ on:
     paths:
       - 'web/**'
       - 'tools/build_site.py'
+      - 'site.config.json'
       - 'data/wiki.json'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -28,11 +29,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      SITE_URL: ${{ vars.SITE_URL || 'https://dmog189.github.io/meso-market-data/' }}
-      SITE_DOMAIN: ${{ vars.SITE_DOMAIN }}
-      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Get the latest prices

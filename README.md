@@ -15,5 +15,9 @@ with price charts, a market index, NPC flips, crafting profits and calculators. 
 - `web/` holds the built app and page template (made by `tools/build_pages.py` in the MapleCharts project).
 - `site/` holds the older build used by the Wix page.
 
-Repository variables: `SITE_URL` (public address, e.g. `https://maplecharts.com/`) and `SITE_DOMAIN`
-(custom domain for GitHub Pages, e.g. `maplecharts.com`).
+Public settings live in `site.config.json` (site address, custom domain, Supabase project address and its public
+"anon" key). Private keys are repository secrets: `SUPABASE_SERVICE_KEY` (for notifications) and, for the Discord
+bot, `DISCORD_APP_ID` and `DISCORD_BOT_TOKEN`.
+
+Community database: run `supabase/schema.sql` in the Supabase SQL editor. Discord bot: deploy
+`supabase/functions/discord` as an Edge Function with "Verify JWT" off and the secret `DISCORD_PUBLIC_KEY`.

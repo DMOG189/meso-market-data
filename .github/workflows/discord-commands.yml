@@ -1,5 +1,5 @@
 # Registers the MapleCharts Discord bot's /price command. Run it once by hand after creating the Discord application.
-# Needs the variable DISCORD_APP_ID and the secret DISCORD_BOT_TOKEN.
+# Needs the secrets DISCORD_APP_ID and DISCORD_BOT_TOKEN.
 name: Discord commands
 
 on:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Register /price
         env:
-          APP_ID: ${{ vars.DISCORD_APP_ID }}
+          APP_ID: ${{ secrets.DISCORD_APP_ID }}
           TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
           if [ -z "$APP_ID" ] || [ -z "$TOKEN" ]; then echo "Set DISCORD_APP_ID and DISCORD_BOT_TOKEN first."; exit 1; fi
