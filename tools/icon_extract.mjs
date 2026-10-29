@@ -6,8 +6,9 @@
 import fs from "node:fs";
 
 const MARKET = process.argv[2] || "market.json";
-const VERSIONS = ["83", "95", "255"];
-const API = "https://maplestory.io/api/GMS/";
+// Classic World's own data first (its items have their own ids), then older global versions.
+const SOURCES = ["MCW/1", "MCW/CBT2", "GMS/83", "GMS/95", "GMS/255"];
+const API = "https://maplestory.io/api/";
 const UA = { "User-Agent": "MapleCharts icons (github.com/DMOG189/meso-market-data)" };
 
 function norm(name) {
@@ -54,7 +55,7 @@ for (const n of names) { const id = wikiId.get(norm(n)); if (id) ids.set(norm(n)
 const missing = [...names].filter((n) => !ids.has(norm(n)));
 if (missing.length) {
   const byName = new Map();
-  for (const v of VERSIONS) {
+  for (const v of SOURCES) {
     const list = (await get(API + v + "/item")) || [];
     for (const it of list) { const k = norm(it.name); if (k && !byName.has(k)) byName.set(k, it.id); }
   }
@@ -66,7 +67,7 @@ fs.mkdirSync("icons", { recursive: true });
 const want = [...new Set(ids.values())].filter((id) => !fs.existsSync(`icons/${id}.png`));
 let got = 0, failed = 0;
 await pool(want, 6, async (id) => {
-  for (const v of VERSIONS) {
+  for (const v of SOURCES) {
     const png = await get(`${API}${v}/item/${id}/icon`, "bin");
     if (png && png.length > 60 && png[0] === 0x89 && png[1] === 0x50) { fs.writeFileSync(`icons/${id}.png`, png); got++; return; }
   }
