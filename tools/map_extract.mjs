@@ -129,10 +129,10 @@ const mapIdsByName = new Map();
 for (const m of mapList) { const k = norm(m.name); if (!mapIdsByName.has(k)) mapIdsByName.set(k, []); mapIdsByName.get(k).push(m.id); }
 
 // Shortest walk from `from` to the town over doors in either direction (doors are sometimes listed one way only).
-async function walkToTown(from, townId, limit = 45) {
+async function walkToTown(from, townId, limit = 90) {
   const prev = new Map([[from, null]]);
   let frontier = [from], fetched = 0;
-  for (let depth = 0; depth < 5 && frontier.length; depth++) {
+  for (let depth = 0; depth < 7 && frontier.length; depth++) {
     const next = [];
     for (const id of frontier) {
       if (id === townId) {
@@ -163,9 +163,13 @@ for (const t of Object.keys(out.towns)) {
       for (const f of info?.foundAt || []) if (f && f.id) cands.push({ id: f.id, npcId: nid, nameMatch: norm(f.name) === norm(s.map) });
     }
     for (const mid of mapIdsByName.get(norm(s.map)) || []) cands.push({ id: mid, npcId: null, nameMatch: true });
-    cands.sort((a, b) => (b.nameMatch && b.npcId ? 2 : b.npcId ? 1 : 0) - (a.nameMatch && a.npcId ? 2 : a.npcId ? 1 : 0));
+    const score = (c) => (c.nameMatch && c.npcId ? 3 : c.nameMatch ? 2 : 1);
+    cands.sort((a, b) => score(b) - score(a));
     let best = null;
-    for (const c of cands.slice(0, 6)) {
+    const tried = new Set();
+    for (const c of cands) {
+      if (tried.has(c.id) || tried.size >= 8) continue;
+      tried.add(c.id);
       const path = c.id === townId ? [townId] : await walkToTown(c.id, townId);
       if (path) { best = { ...c, path }; break; }
     }
@@ -179,6 +183,12 @@ for (const t of Object.keys(out.towns)) {
       rec.path = best.path;
       rec.pathNames = await Promise.all(best.path.map((id) => mapName(id)));
       if (best.path.length > 1) {
+        // Prefer the town door that leads furthest along the way (e.g. straight into the market, not via the park).
+        for (let k = best.path.length - 1; k >= 2; k--) {
+          if (townLay.doors.some((d) => d.to === best.path[k])) { best.path = [townId, ...best.path.slice(k)]; break; }
+        }
+        rec.path = best.path;
+        rec.pathNames = await Promise.all(best.path.map((id) => mapName(id)));
         const hop = best.path[1];
         let door = townLay.doors.find((d) => d.to === hop);
         if (!door) {
