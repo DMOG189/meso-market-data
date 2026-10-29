@@ -1,0 +1,182 @@
+[
+ {
+  "npc": "Lucy",
+  "town": "Amherst",
+  "map": "Amherst Department Store",
+  "type": "General"
+ },
+ {
+  "npc": "Sid",
+  "town": "Amherst",
+  "map": "Amherst Weapon Store",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Pan",
+  "town": "Southperry",
+  "map": "Southperry Armor Store",
+  "type": "Armor"
+ },
+ {
+  "npc": "Mina",
+  "town": "Lith Harbor",
+  "map": "Lith Harbor Department Store",
+  "type": "General"
+ },
+ {
+  "npc": "Natasha",
+  "town": "Lith Harbor",
+  "map": "Lith Harbor Armor Shop",
+  "type": "Armor"
+ },
+ {
+  "npc": "Silver",
+  "town": "Lith Harbor",
+  "map": "Lith Harbor Weapon Shop",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Doofus",
+  "town": "Henesys",
+  "map": "Henesys Market",
+  "type": "Use"
+ },
+ {
+  "npc": "Flint",
+  "town": "Henesys",
+  "map": "Henesys Town Hall",
+  "type": "Scroll"
+ },
+ {
+  "npc": "Karl",
+  "town": "Henesys",
+  "map": "Henesys Weapon Store",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Luna",
+  "town": "Henesys",
+  "map": "Henesys Department Store",
+  "type": "General"
+ },
+ {
+  "npc": "Oak",
+  "town": "Henesys",
+  "map": "Henesys Town Hall",
+  "type": "Furniture"
+ },
+ {
+  "npc": "Raymond",
+  "town": "Henesys",
+  "map": "Henesys Town Hall",
+  "type": "General"
+ },
+ {
+  "npc": "Sam",
+  "town": "Henesys",
+  "map": "Henesys Weapon Store",
+  "type": "Armor"
+ },
+ {
+  "npc": "El Moth",
+  "town": "Ellinia",
+  "map": "The Tree That Grew III",
+  "type": "Scroll"
+ },
+ {
+  "npc": "Flora the Fairy",
+  "town": "Ellinia",
+  "map": "Ellinia Weapon Store",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Len the Fairy",
+  "town": "Ellinia",
+  "map": "Ellinia Department Store",
+  "type": "General"
+ },
+ {
+  "npc": "Serabi the Fairy",
+  "town": "Ellinia",
+  "map": "Ellinia Weapon Store",
+  "type": "Armor"
+ },
+ {
+  "npc": "Arturo",
+  "town": "Perion",
+  "map": "Perion Department Store",
+  "type": "General"
+ },
+ {
+  "npc": "Harry",
+  "town": "Perion",
+  "map": "Perion Weapon Store",
+  "type": "Armor"
+ },
+ {
+  "npc": "River",
+  "town": "Perion",
+  "map": "Perion Weapon Store",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Ben",
+  "town": "Kerning City",
+  "map": "Kerning City Civic Center",
+  "type": "Scroll"
+ },
+ {
+  "npc": "Cutthroat Manny",
+  "town": "Kerning City",
+  "map": "Kerning City Self-Defence Item Store",
+  "type": "Weapon"
+ },
+ {
+  "npc": "Don Hwang",
+  "town": "Kerning City",
+  "map": "Kerning City Self-Defence Item Store",
+  "type": "Armor"
+ },
+ {
+  "npc": "Dr. Faymus",
+  "town": "Kerning City",
+  "map": "Kerning City Pharmacy",
+  "type": "General"
+ },
+ {
+  "npc": "Max",
+  "town": "Kerning City",
+  "map": "Kerning City Civic Center",
+  "type": "General"
+ },
+ {
+  "npc": "Tulcus",
+  "town": "Kerning City",
+  "map": "The Swamp of Despair II",
+  "type": "Scroll"
+ },
+ {
+  "npc": "Weston",
+  "town": "Kerning City",
+  "map": "Kerning City Civic Center",
+  "type": "Furniture"
+ },
+ {
+  "npc": "24 Hr Mobile Store",
+  "town": "Sleepywood",
+  "map": "Ant Tunnel Park",
+  "type": "General"
+ },
+ {
+  "npc": "Mr. Sweatbottom",
+  "town": "Sleepywood",
+  "map": "Regular Sauna",
+  "type": "General"
+ },
+ {
+  "npc": "Valen",
+  "town": "Florina Beach",
+  "map": "Florina Beach",
+  "type": "General"
+ }
+]

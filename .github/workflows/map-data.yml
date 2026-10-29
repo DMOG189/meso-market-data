@@ -1,0 +1,42 @@
+# Collects map layout data (platforms, portals, NPC positions, world-map town spots) for the NPC maps,
+# from the maplestory.io game-data API. Coordinates and names only; no game images.
+name: Map data
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'GMS data version to read'
+        required: false
+        default: '62'
+  schedule:
+    - cron: '17 4 1 * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: map-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Collect map layouts
+        run: node tools/map_extract.mjs data/npc-shops.json data/maps.json "${{ github.event.inputs.version || '62' }}"
+      - name: Save if anything changed
+        run: |
+          if git ls-files --error-unmatch data/maps.json >/dev/null 2>&1 && git diff --quiet -- data/maps.json; then
+            echo "No changes."
+            exit 0
+          fi
+          git add data/maps.json
+          git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Map data $(date -u +%Y-%m-%d)"
+          git push -q
