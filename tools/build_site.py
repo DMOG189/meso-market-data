@@ -22,6 +22,11 @@ SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or CONF.get("supabaseAnonKey
 # Ads stay off until an AdSense publisher ID (ca-pub-…) and ad unit IDs are set in site.config.json.
 ADS_CLIENT = (CONF.get("adsenseClient") or "").strip()
 ADS_SLOTS = {k: str(v) for k, v in (CONF.get("adSlots") or {}).items() if v}
+# Donation links for the "Support us" window: a card payment page (may contain {amount} and {currency}),
+# a PayPal.me name, and any other links [{"name": "...", "url": "..."}]. Empty = "donations open soon".
+_d = CONF.get("donate") or {}
+DONATE = {k: v for k, v in {"card": (_d.get("card") or "").strip(), "paypal": (_d.get("paypal") or "").strip(),
+                            "links": [l for l in (_d.get("links") or []) if l.get("url")]}.items() if v}
 FEE = 0.03
 
 ROOT_PATH = re.sub(r"^https?://[^/]+", "", SITE_URL) or "/"
@@ -77,6 +82,8 @@ def config(base, slug=None):
         cfg.update(supabaseUrl=SUPABASE_URL, supabaseKey=SUPABASE_KEY)
     if ADS_CLIENT:
         cfg["ads"] = {"client": ADS_CLIENT, "slots": ADS_SLOTS}
+    if DONATE:
+        cfg["donate"] = DONATE
     if slug:
         cfg["item"] = slug
     return "<script>window.MESO_CONFIG = %s;</script>" % json.dumps(cfg)
