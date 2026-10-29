@@ -204,9 +204,14 @@ if Image:
         if FONT and os.path.exists(FONT):
             f = ImageFont.truetype(FONT, size)
             try:
-                f.set_variation_by_axes([100, weight])
-            except Exception:
-                pass
+                vals = []
+                for ax in f.get_variation_axes():
+                    nm = ax.get("name", b"")
+                    nm = (nm.decode() if isinstance(nm, bytes) else str(nm)).lower()
+                    vals.append(weight if "weight" in nm else (100 if "width" in nm else ax.get("default", ax["minimum"])))
+                f.set_variation_by_axes(vals)
+            except Exception as e:
+                print("font weight not set:", e)
             return f
         for cand in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf"):
             if os.path.exists(cand):
