@@ -158,7 +158,7 @@ def seo_block(it):
 shutil.rmtree(OUT, ignore_errors=True)
 os.makedirs(OUT)
 for f in os.listdir(WEB):
-    if f in ("template.html", "items-static.json"):
+    if f == "template.html":
         continue
     src = os.path.join(WEB, f)
     if os.path.isfile(src):
