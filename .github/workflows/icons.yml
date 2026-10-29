@@ -1,0 +1,40 @@
+# Downloads item icons (once per item) for MapleCharts from the maplestory.io game-data API into icons/,
+# with data/icons.json mapping item names to icon ids. Item icons are Nexon's game art, credited on the site.
+name: Item icons
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '29 4 * * 2'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: icons
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Get the latest prices (for the item names)
+        run: |
+          git fetch --depth=1 origin data
+          git show FETCH_HEAD:market.json > market.json
+      - name: Download icons
+        run: node tools/icon_extract.mjs market.json
+      - name: Save if anything changed
+        run: |
+          git add icons data/icons.json
+          if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+          git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Item icons $(date -u +%Y-%m-%d)"
+          git push -q
+          GH_TOKEN="${{ github.token }}" gh workflow run pages.yml --repo "${GITHUB_REPOSITORY}" --ref main
