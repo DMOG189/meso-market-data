@@ -39,4 +39,5 @@ jobs:
           git add data/maps.json
           git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "Map data $(date -u +%Y-%m-%d)"
+          git pull -q --rebase origin main
           git push -q

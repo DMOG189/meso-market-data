@@ -36,5 +36,6 @@ jobs:
           if git diff --cached --quiet; then echo "No changes."; exit 0; fi
           git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "Item icons $(date -u +%Y-%m-%d)"
+          git pull -q --rebase origin main
           git push -q
           GH_TOKEN="${{ github.token }}" gh workflow run pages.yml --repo "${GITHUB_REPOSITORY}" --ref main
