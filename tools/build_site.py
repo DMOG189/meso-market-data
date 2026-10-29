@@ -76,6 +76,8 @@ for lst in by_cat.values():
 
 def config(base, slug=None):
     cfg = {"marketUrl": base + "market.json", "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
+    if os.path.isdir("icons"):
+        cfg["iconBase"] = base + "icons/"
     if os.path.exists(os.path.join(WEB, "maps-data.js")):
         cfg["mapsUrl"] = base + "maps-data.js?v=" + MAPS_V
     if SUPABASE_URL and SUPABASE_KEY:
@@ -183,6 +185,8 @@ for f in os.listdir(WEB):
     if os.path.isfile(src):
         shutil.copy(src, os.path.join(OUT, f))
 shutil.copy(MARKET, os.path.join(OUT, "market.json"))
+if os.path.isdir("icons"):
+    shutil.copytree("icons", os.path.join(OUT, "icons"), dirs_exist_ok=True)
 if ADS_CLIENT:
     open(os.path.join(OUT, "ads.txt"), "w").write("google.com, %s, DIRECT, f08c47fec0942fa0\n" % ADS_CLIENT.replace("ca-", ""))
 
