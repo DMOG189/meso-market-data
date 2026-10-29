@@ -13,3 +13,9 @@ Only the newest copy is kept. The prices themselves come from maplestory-classic
 Free Market sales and updates about once a day. Unofficial fan project, not affiliated with Nexon.
 
 To copy right now: **Actions → Copy prices → Run workflow**.
+
+## Page code
+
+`site/app.min.js` and `site/app.min.css` are the built code of the Meso Market web page. The page on Wix loads
+them from jsDelivr, pinned to a commit and checked with an integrity hash, so changing these files does not
+change the live page until its `index.html` points at the new commit.
