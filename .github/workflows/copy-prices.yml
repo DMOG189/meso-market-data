@@ -1,0 +1,77 @@
+# Copies the public Free Market price file from maplestory-classic.com every 15 minutes
+# and publishes it on the "data" branch, where any web page (like the Meso Market page on Wix)
+# can read it. Only the newest copy is kept, so the repository stays small.
+name: Copy prices
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: copy-prices
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download the price file
+        run: |
+          curl -fsSL --retry 3 --retry-delay 10 --max-time 90 \
+            -A "meso-market-relay (+https://github.com/${GITHUB_REPOSITORY})" \
+            -o market.json https://maplestory-classic.com/market.json
+
+      - name: Check the file
+        id: check
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          data = json.load(open("market.json"))
+          items = data.get("items")
+          if not isinstance(items, list) or len(items) < 100 or "updatedAt" not in data:
+              raise SystemExit("The downloaded file does not look like the price list; keeping the previous copy.")
+          new = data["updatedAt"]
+          old = ""
+          url = "https://raw.githubusercontent.com/%s/data/meta.json" % os.environ["GITHUB_REPOSITORY"]
+          try:
+              with urllib.request.urlopen(url, timeout=20) as r:
+                  old = json.load(r).get("updatedAt", "")
+          except Exception:
+              pass
+          print("source updatedAt:", new, "| published copy:", old or "none", "| items:", len(items))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("updated_at=%s\n" % new)
+              out.write("changed=%s\n" % ("true" if new != old else "false"))
+          PY
+
+      - name: Publish to the data branch
+        if: steps.check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATED_AT: ${{ steps.check.outputs.updated_at }}
+        run: |
+          mkdir publish
+          mv market.json publish/
+          cd publish
+          python3 - <<'PY'
+          import json, os, datetime
+          items = len(json.load(open("market.json"))["items"])
+          meta = {
+              "updatedAt": os.environ["UPDATED_AT"],
+              "copiedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "items": items,
+              "source": "https://maplestory-classic.com/market.json",
+          }
+          json.dump(meta, open("meta.json", "w"))
+          PY
+          git init -q -b data
+          git add market.json meta.json
+          git -c user.name="meso-market-relay" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Prices updated ${UPDATED_AT}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data
+          echo "Published prices from ${UPDATED_AT}"
