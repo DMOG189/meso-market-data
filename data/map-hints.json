@@ -1,0 +1,6 @@
+{
+  "_about": "Routes for shops whose last door is missing from the game data: the door in town leads to the first map listed. From earlier game data.",
+  "Karl|Henesys": ["Henesys Market"],
+  "Sam|Henesys": ["Henesys Market"],
+  "Mr. Sweatbottom|Sleepywood": ["Sleepywood Hotel"]
+}

@@ -12,6 +12,7 @@ const TOWNS = { "Maple Island": ["Amherst", "Southperry"],
 const NOWHERE = 999999999;
 
 const shops = JSON.parse(fs.readFileSync(shopsPath, "utf8"));
+const HINTS = fs.existsSync("data/map-hints.json") ? JSON.parse(fs.readFileSync("data/map-hints.json", "utf8")) : {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let calls = 0;
 
@@ -208,7 +209,18 @@ for (const t of Object.keys(out.towns)) {
       rec.path = best.path;
       rec.pathNames = await Promise.all(best.path.map((id) => mapName(id)));
     } else {
-      console.warn("not found:", s.npc, "/", s.map, "in", t);
+      // Known route from earlier game data: the town door to the first hop, then the shop.
+      const hint = HINTS[s.npc + "|" + t];
+      const door = hint && townLay.doors.find((d) => norm(d.toName) === norm(hint[0]));
+      if (door) {
+        rec.mapName = s.map;
+        rec.entry = { x: door.x, y: door.y };
+        rec.path = [townId, door.to];
+        rec.pathNames = [t, ...hint, s.map];
+        rec.hinted = true;
+      } else {
+        console.warn("not found:", s.npc, "/", s.map, "in", t);
+      }
     }
     out.shops.push(rec);
   }
