@@ -45,6 +45,10 @@ market = json.load(open(MARKET, encoding="utf-8"))
 wiki = json.load(open("data/wiki.json", encoding="utf-8")) if os.path.exists("data/wiki.json") else {"monsters": []}
 static = json.load(open(os.path.join(WEB, "items-static.json"), encoding="utf-8"))
 template = open(os.path.join(WEB, "template.html"), encoding="utf-8").read()
+MAPS_V = ""
+if os.path.exists(os.path.join(WEB, "maps-data.js")):
+    import hashlib
+    MAPS_V = hashlib.sha256(open(os.path.join(WEB, "maps-data.js"), "rb").read()).hexdigest()[:10]
 updated = market.get("updatedAt", "")
 updated_day = updated[:10]
 low_data = market.get("lowDataBelow") or 5
@@ -64,6 +68,8 @@ for lst in by_cat.values():
 
 def config(base, slug=None):
     cfg = {"marketUrl": base + "market.json", "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
+    if os.path.exists(os.path.join(WEB, "maps-data.js")):
+        cfg["mapsUrl"] = base + "maps-data.js?v=" + MAPS_V
     if SUPABASE_URL and SUPABASE_KEY:
         cfg.update(supabaseUrl=SUPABASE_URL, supabaseKey=SUPABASE_KEY)
     if slug:
