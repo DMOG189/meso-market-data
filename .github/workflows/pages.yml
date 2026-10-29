@@ -14,7 +14,7 @@ on:
       - '.github/workflows/pages.yml'
   workflow_dispatch:
   schedule:
-    - cron: '23 5,17 * * *'
+    - cron: '27 5,17 * * *'
 
 permissions:
   contents: read

@@ -1,11 +1,11 @@
-# Copies the public Free Market price file from maplestory-classic.com every 15 minutes
+# Checks the public Free Market price file on maplestory-classic.com every 15 minutes (so at least every hour)
 # and publishes it on the "data" branch, where any web page (like the Meso Market page on Wix)
 # can read it. Only the newest copy is kept, so the repository stays small.
 name: Copy prices
 
 on:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: '5,20,35,50 * * * *'
   workflow_dispatch:
 
 permissions:
