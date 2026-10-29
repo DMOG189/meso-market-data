@@ -173,6 +173,28 @@ for (const t of Object.keys(out.towns)) {
       const path = c.id === townId ? [townId] : await walkToTown(c.id, townId);
       if (path) { best = { ...c, path }; break; }
     }
+    if (!best) {
+      // Fallback: walk outward from the town (up to 4 doors away) looking for the map or the NPC by name.
+      const prev = new Map([[townId, null]]);
+      let frontier = [townId], budget = 120;
+      search: for (let depth = 0; depth <= 4 && frontier.length; depth++) {
+        const next = [];
+        for (const id of frontier) {
+          if (budget-- <= 0) break search;
+          const lay = await layout(id);
+          if (!lay) continue;
+          const npc = lay.npcs.find((n) => norm(n.name) === norm(s.npc));
+          if (npc || norm(lay.name) === norm(s.map)) {
+            const path = [];
+            for (let x = id; x != null; x = prev.get(x)) path.unshift(x);
+            best = { id, npcId: npc ? npc.id : null, path };
+            break search;
+          }
+          for (const d of lay.doors) if (!prev.has(d.to)) { prev.set(d.to, id); next.push(d.to); }
+        }
+        frontier = next;
+      }
+    }
     if (best) {
       const lay = await layout(best.id);
       addMap(lay);
