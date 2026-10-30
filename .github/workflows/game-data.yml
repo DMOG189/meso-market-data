@@ -1,0 +1,44 @@
+# Collects MapleStory Classic World game data for MapleCharts from the maplestory.io API:
+# item details (data/items.json) and hunting maps (data/hunt.json + data/huntmaps/). Names and numbers only.
+name: Game data
+
+on:
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: 'Refresh every item (not only new ones)'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: '47 4 * * 3'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: game-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Item details
+        run: node tools/item_info.mjs ${{ github.event.inputs.refresh == 'true' && '--all' || '' }}
+      - name: Hunting maps
+        run: node tools/hunt_extract.mjs
+      - name: Save if anything changed
+        run: |
+          git add data/items.json data/hunt.json data/huntmaps
+          if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+          git -c user.name="maplecharts-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Game data $(date -u +%Y-%m-%d)"
+          git pull -q --rebase origin main
+          git push -q
+          GH_TOKEN="${{ github.token }}" gh workflow run pages.yml --repo "${GITHUB_REPOSITORY}" --ref main
