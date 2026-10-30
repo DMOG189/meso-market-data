@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="{{BASE}}app.min.css?v=50f7c889da">
-  <script>(function(){var L=['he','en','ja','zh','ar','es'],l='';try{var q=(new URLSearchParams(location.search).get('lang')||'').slice(0,2).toLowerCase();if(L.indexOf(q)>=0)l=q;if(!l){var s=JSON.parse(localStorage.getItem('state_v1')||'{}');if(s.langChosen&&L.indexOf(s.lang)>=0)l=s.lang;}if(!l){var p=navigator.languages||[navigator.language||''];for(var i=0;i<p.length&&!l;i++){var c=String(p[i]||'').slice(0,2).toLowerCase();if(c==='iw')c='he';if(L.indexOf(c)>=0)l=c;}}}catch(e){}l=l||'en';window.__mcLang=l;if(l==='he'||l==='ar'){document.documentElement.dir='rtl';document.documentElement.lang=l;}})();</script>
+  <link rel="stylesheet" href="{{BASE}}app.min.css?v=97b9e7fb2f">
+  <script>(function(){var L=['he','en','ja','zh','ar','es'],l='';try{var q=(new URLSearchParams(location.search).get('lang')||'').slice(0,2).toLowerCase();if(L.indexOf(q)>=0)l=q;if(!l){var d=document.documentElement.getAttribute('data-lang');if(L.indexOf(d)>=0)l=d;}if(!l){var s=JSON.parse(localStorage.getItem('state_v1')||'{}');if(s.langChosen&&L.indexOf(s.lang)>=0)l=s.lang;}if(!l){var p=navigator.languages||[navigator.language||''];for(var i=0;i<p.length&&!l;i++){var c=String(p[i]||'').slice(0,2).toLowerCase();if(c==='iw')c='he';if(L.indexOf(c)>=0)l=c;}}}catch(e){}l=l||'en';window.__mcLang=l;document.documentElement.dir=(l==='he'||l==='ar')?'rtl':'ltr';document.documentElement.lang=l;})();</script>
   <!--CONFIG-->
 </head>
 <body>
@@ -145,8 +145,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="{{BASE}}i18n-en.js?v=50f7c889da"></script>
-  <script>if(window.__mcLang&&window.__mcLang!=='en')document.write('<script src="{{BASE}}i18n-'+window.__mcLang+'.js?v=50f7c889da"><\/script>');</script>
-  <script src="{{BASE}}app.min.js?v=50f7c889da"></script>
+  <script src="{{BASE}}i18n-en.js?v=97b9e7fb2f"></script>
+  <script>if(window.__mcLang&&window.__mcLang!=='en')document.write('<script src="{{BASE}}i18n-'+window.__mcLang+'.js?v=97b9e7fb2f"><\/script>');</script>
+  <script src="{{BASE}}app.min.js?v=97b9e7fb2f"></script>
 </body>
 </html>

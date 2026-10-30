@@ -5,10 +5,11 @@
 Uses web/ (the app, page template, icons; built from the MapleCharts project), data/wiki.json (game data from
 MapleClassic Wiki, CC BY-NC-SA 4.0) and the latest market.json from maplestory-classic.com.
 
-Makes: index.html, item/<slug>/index.html for every traded item, og/<slug>.png share images, sitemap.xml,
-robots.txt, 404.html, market.json and the app files. SITE_URL sets the public address used in links.
+Makes: index.html, item/<slug>/index.html for every traded item (and the same in Hebrew under he/), og/<slug>.png share
+images, sitemap.xml, robots.txt, 404.html, market.json, item-info.json (game data per item), hunt/ (hunting maps) and
+the app files. SITE_URL sets the public address used in links.
 """
-import datetime, html, json, os, re, shutil, sys
+import datetime, html, json, os, re, shutil, sys, urllib.parse
 
 MARKET = sys.argv[1] if len(sys.argv) > 1 else "market.json"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "_site"
@@ -27,6 +28,8 @@ ADS_SLOTS = {k: str(v) for k, v in (CONF.get("adSlots") or {}).items() if v}
 _d = CONF.get("donate") or {}
 DONATE = {k: v for k, v in {"card": (_d.get("card") or "").strip(), "paypal": (_d.get("paypal") or "").strip(),
                             "links": [l for l in (_d.get("links") or []) if l.get("url")]}.items() if v}
+DISCORD_APP = str(CONF.get("discordAppId") or "").strip()
+DISCORD_INVITE = (CONF.get("discordInvite") or "").strip()
 FEE = 0.03
 
 ROOT_PATH = re.sub(r"^https?://[^/]+", "", SITE_URL) or "/"
@@ -60,6 +63,24 @@ MAPS_V = ""
 if os.path.exists(os.path.join(WEB, "maps-data.js")):
     import hashlib
     MAPS_V = hashlib.sha256(open(os.path.join(WEB, "maps-data.js"), "rb").read()).hexdigest()[:10]
+import hashlib
+
+
+def file_hash(path):
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()[:10] if os.path.exists(path) else ""
+
+
+# Game data from MapleStory Classic World (tools/item_info.mjs, tools/hunt_extract.mjs)
+game_items = json.load(open("data/items.json", encoding="utf-8")) if os.path.exists("data/items.json") else {}
+game = {}
+for _id, _v in sorted(game_items.items(), key=lambda kv: int(kv[0])):
+    if _v.get("n") and norm(_v["n"]) not in game:
+        game[norm(_v["n"])] = dict(_v, id=int(_id))
+icon_ids = json.load(open("data/icons.json", encoding="utf-8")) if os.path.exists("data/icons.json") else {}
+hunt = json.load(open("data/hunt.json", encoding="utf-8")) if os.path.exists("data/hunt.json") else {"mobs": {}, "maps": {}}
+hunt_by_norm = {norm(k): (k, v) for k, v in hunt.get("mobs", {}).items()}
+HUNT_V = file_hash("data/hunt.json")
+INFO_V = file_hash("data/items.json")
 updated = market.get("updatedAt", "")
 updated_day = updated[:10]
 low_data = market.get("lowDataBelow") or 5
@@ -77,7 +98,7 @@ for lst in by_cat.values():
     lst.sort(key=lambda x: -(x.get("sold") or 0))
 
 
-def config(base, slug=None):
+def config(base, slug=None, lang=None):
     # The app first loads the price list without history (smaller), then the daily history right after.
     cfg = {"marketUrl": base + "market-lite.json", "histUrl": base + "market-hist.json",
            "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
@@ -93,6 +114,16 @@ def config(base, slug=None):
         cfg["ads"] = {"client": ADS_CLIENT, "slots": ADS_SLOTS}
     if DONATE:
         cfg["donate"] = DONATE
+    if game_items:
+        cfg["itemInfoUrl"] = base + "item-info.json?v=" + INFO_V
+    if hunt.get("mobs"):
+        cfg.update(huntBase=base + "hunt/", huntV=HUNT_V)
+    if DISCORD_APP:
+        cfg["discordAppId"] = DISCORD_APP
+    if DISCORD_INVITE:
+        cfg["discordInvite"] = DISCORD_INVITE
+    if lang:
+        cfg.update(lang=lang, langPath=lang + "/")
     if slug:
         cfg["item"] = slug
     return "<script>window.MESO_CONFIG = %s;</script>" % json.dumps(cfg)
@@ -114,8 +145,10 @@ def head(title, desc, url, image, extra=""):
         esc(title), esc(desc), esc(url), esc(title), esc(desc), esc(url), esc(image), extra)
 
 
-def page(base, head_html, cfg, seo="", brand_tag="h1"):
+def page(base, head_html, cfg, seo="", brand_tag="h1", lang=None):
     out = template.replace("<!--HEAD-->", head_html).replace("<!--CONFIG-->", cfg)
+    if lang == "he":
+        out = out.replace('<html lang="en" dir="ltr">', '<html lang="he" dir="rtl" data-lang="he">', 1)
     out = out.replace("<!--BRAND-->", '<%s class="app-title">MapleCharts</%s>' % (brand_tag, brand_tag))
     out = out.replace("<!--SEO-->", seo)
     return out.replace("{{BASE}}", base)
@@ -150,36 +183,124 @@ def item_text(it):
     return " ".join(parts)
 
 
-def seo_block(it):
+def item_text_he(it):
+    st, buy, sell, p = item_facts(it)
+    name = it["n"]
+    unit = " לסט" if it.get("u") == "set" else ""
+    parts = []
+    if p is not None:
+        parts.append("שחקנים משלמים בערך %s מזו%s על %s (בדרך כלל %s–%s, %s נמכרו)." % (num(p), unit, name, num(it.get("p25")), num(it.get("p75")), num(it.get("sold"))))
+    if buy:
+        parts.append("חנויות NPC מוכרות אותו ב-%s מזו (%s%s)." % (num(buy[0]), buy[1] or "NPC", ", " + buy[2] if buy[2] else ""))
+    if sell is not None:
+        parts.append("NPC קונים אותו ב-%s מזו." % num(sell))
+    if buy and p is not None:
+        profit = p * (1 - FEE) - buy[0]
+        if profit > 0 and profit / buy[0] >= 0.05 and (it.get("sold") or 0) >= low_data:
+            parts.append("קנייה מה-NPC ומכירה לשחקנים מרוויחה בערך %s מזו ליחידה אחרי עמלה של %d%%." % (num(profit), FEE * 100))
+        elif p < buy[0]:
+            parts.append("זול יותר לקנות משחקנים מאשר מה-NPC.")
+    elif sell is not None and p is not None:
+        parts.append("מכירה לשחקנים משתלמת יותר." if p * (1 - FEE) > sell else "מכירה ל-NPC משתלמת יותר.")
+    return " ".join(parts)
+
+
+L = {
+    "en": {"npcShop": "NPC shop price", "npcAt": "%s mesos at %s", "anNpc": "an NPC", "npcBuys": "NPC buys for", "mesos": "%s mesos",
+           "fm": "Player price (median)", "range": "Typical range", "sold": "Sold", "sellers": "Sellers", "updated": "Updated",
+           "h1": "%s price", "where": "Where to get %s", "drop": "%s (Lv. %d%s): %.2g%% drop rate", "huntAt": "best hunting map: %s",
+           "more": "More %s prices", "details": "Item details", "lv": "Required level", "rq": "Required stats", "jobs": "Jobs",
+           "slots": "Upgrade slots", "sc": "Success rate", "restores": "Restores", "lasts": "Lasts", "min": "%d min", "stack": "Stacks up to",
+           "source": "Item details from MapleStory Classic World's game data (maplestory.io).", "items": "Items"},
+    "he": {"npcShop": "מחיר בחנות NPC", "npcAt": "%s מזו אצל %s", "anNpc": "NPC", "npcBuys": "NPC קונה ב-", "mesos": "%s מזו",
+           "fm": "מחיר שחקנים (חציון)", "range": "טווח רגיל", "sold": "נמכרו", "sellers": "מוכרים", "updated": "עודכן",
+           "h1": "מחיר %s", "where": "איפה משיגים %s", "drop": "%s (רמה %d%s): סיכוי נפילה %.2g%%", "huntAt": "מפת הציד הכי טובה: %s",
+           "more": "עוד מחירים: %s", "details": "פרטי הפריט", "lv": "רמה נדרשת", "rq": "סטטים נדרשים", "jobs": "מקצועות",
+           "slots": "סלוטים לשדרוג", "sc": "סיכויי הצלחה", "restores": "משחזר", "lasts": "משך", "min": "%d דק׳", "stack": "נערם עד",
+           "source": "פרטי הפריט מתוך נתוני המשחק של MapleStory Classic World (maplestory.io).", "items": "פריטים"},
+}
+JOBS_HE = {"Warrior": "לוחם", "Magician": "קוסם", "Bowman": "קשת", "Thief": "גנב", "Pirate": "פיראט"}
+STAT_ORDER = ["STR", "DEX", "INT", "LUK", "HP", "MP", "ATT", "MATT", "DEF", "MDEF", "ACC", "AVOID", "SPEED", "JUMP", "HANDS"]
+
+
+def game_block(it, lang):
+    g = game.get(norm(it["n"]))
+    if not g:
+        return ""
+    T = L[lang]
+    rows = []
+    if g.get("lv"):
+        rows.append((T["lv"], str(g["lv"])))
+    if g.get("rq") and any(g["rq"]):
+        rows.append((T["rq"], ", ".join("%s %d" % (k, v) for k, v in zip(("STR", "DEX", "INT", "LUK"), g["rq"]) if v)))
+    if g.get("job"):
+        rows.append((T["jobs"], ", ".join(JOBS_HE.get(j, j) if lang == "he" else j for j in g["job"])))
+    if g.get("slots"):
+        rows.append((T["slots"], str(g["slots"])))
+    if g.get("sc") is not None:
+        rows.append((T["sc"], "%d%%" % g["sc"]))
+    rest = [x for x in (("+%s HP" % num(g["hp"])) if g.get("hp") else "", ("+%d%% HP" % g["hpR"]) if g.get("hpR") else "",
+                        ("+%s MP" % num(g["mp"])) if g.get("mp") else "", ("+%d%% MP" % g["mpR"]) if g.get("mpR") else "") if x]
+    if rest:
+        rows.append((T["restores"], ", ".join(rest)))
+    if g.get("time"):
+        rows.append((T["lasts"], T["min"] % max(1, round(g["time"] / 60000))))
+    if (g.get("max") or 0) > 1:
+        rows.append((T["stack"], num(g["max"])))
+    stats = " ".join("%+d %s" % (g["st"][k], k) for k in STAT_ORDER if (g.get("st") or {}).get(k))
+    if stats:
+        rows.insert(0, ("Stats" if lang == "en" else "סטטים", stats))
+    if not rows and not g.get("d"):
+        return ""
+    facts = "".join("<div><dt>%s</dt><dd dir=\"ltr\">%s</dd></div>" % (esc(k), esc(v)) for k, v in rows)
+    desc = '<p class="ii-desc" dir="ltr" lang="en">%s</p>' % esc(g["d"]).replace("\n", "<br>") if g.get("d") else ""
+    return '<h2>%s</h2>%s%s<p class="ii-src">%s</p>' % (esc(T["details"]), '<dl class="seo-facts">%s</dl>' % facts if facts else "", desc, esc(T["source"]))
+
+
+def seo_block(it, lang="en"):
+    T = L[lang]
+    up = "../../../" if lang == "he" else "../../"
+    home = up + ("he/" if lang == "he" else "")
     st, buy, sell, p = item_facts(it)
     name = it["n"]
     rows = []
     if buy:
-        rows.append(("NPC shop price", "%s mesos at %s" % (num(buy[0]), buy[1] or "an NPC")))
+        rows.append((T["npcShop"], T["npcAt"] % (num(buy[0]), buy[1] or T["anNpc"])))
     if sell is not None:
-        rows.append(("NPC buys for", "%s mesos" % num(sell)))
+        rows.append((T["npcBuys"], T["mesos"] % num(sell)))
     if p is not None:
-        rows.append(("Player price (median)", "%s mesos" % num(p)))
-        rows.append(("Typical range", "%s–%s" % (num(it.get("p25")), num(it.get("p75")))))
-        rows.append(("Sold", num(it.get("sold"))))
+        rows.append((T["fm"], T["mesos"] % num(p)))
+        rows.append((T["range"], "%s–%s" % (num(it.get("p25")), num(it.get("p75")))))
+        rows.append((T["sold"], num(it.get("sold"))))
         if it.get("sellers"):
-            rows.append(("Sellers", num(it.get("sellers"))))
-    rows.append(("Updated", updated_day))
+            rows.append((T["sellers"], num(it.get("sellers"))))
+    rows.append((T["updated"], updated_day))
     facts = "".join("<div><dt>%s</dt><dd>%s</dd></div>" % (esc(k), esc(v)) for k, v in rows)
     drop_html = ""
     ds = sorted(drops.get(norm(name), []), key=lambda x: -x[1][1])[:6]
     if ds:
-        drop_html = "<h2>Where to get %s</h2><ul>%s</ul>" % (esc(name), "".join(
-            "<li>%s (Lv. %d%s): %.2g%% drop rate</li>" % (esc(m[0]), m[1], ", " + esc(m[4]) if m[4] else "", d[1]) for m, d in ds))
+        lis = []
+        for m, d in ds:
+            line = esc(T["drop"] % (m[0], m[1], ", " + m[4] if m[4] else "", d[1]))
+            hm = hunt_by_norm.get(norm(m[0]))
+            if hm and hm[1]:
+                best = hunt.get("maps", {}).get(str(hm[1][0][0]), {}).get("n")
+                if best:
+                    line += ' · <a href="%s?hunt=%s">%s</a>' % (home, esc(urllib.parse.quote(hm[0])), esc(T["huntAt"] % best))
+            lis.append("<li>%s</li>" % line)
+        drop_html = "<h2>%s</h2><ul>%s</ul>" % (esc(T["where"] % name), "".join(lis))
     related = [r for r in by_cat.get(it.get("k") or "Etc", []) if r is not it][:8]
     rel_html = ""
     if related:
-        rel_html = "<h2>More %s prices</h2><ul class=\"seo-links\">%s</ul>" % (esc(it.get("k") or "item"), "".join(
+        rel_html = "<h2>%s</h2><ul class=\"seo-links\">%s</ul>" % (esc(T["more"] % (it.get("k") or "item")), "".join(
             '<li><a href="../%s/">%s</a></li>' % (esc(r["s"]), esc(r["n"])) for r in related))
+    iid = icon_ids.get(norm(name))
+    ico = '<img class="seo-ico" src="%sicons/%s.png" alt="" width="32" height="32" loading="lazy"> ' % (up, iid) if iid and os.path.isdir("icons") else ""
+    text = item_text_he(it) if lang == "he" else item_text(it)
     return ('<section id="seo-item" class="seo-item"><article class="panel seo-card">'
-            '<nav class="crumbs"><a href="../../">MapleCharts</a> › %s</nav>'
-            '<h1>%s price</h1><p>%s</p><dl class="seo-facts">%s</dl>%s%s</article></section>') % (
-        esc(it.get("k") or "Items"), esc(name), esc(item_text(it)), facts, drop_html, rel_html)
+            '<nav class="crumbs"><a href="%s">MapleCharts</a> › %s</nav>'
+            '<h1>%s%s</h1><p>%s</p><dl class="seo-facts">%s</dl>%s%s%s</article></section>') % (
+        home, esc(it.get("k") or T["items"]), ico, esc(T["h1"] % name), esc(text), facts, game_block(it, lang), drop_html, rel_html)
 
 
 # ---------------------------------------------------------------- write the site
@@ -200,27 +321,64 @@ json.dump({"updatedAt": _m.get("updatedAt"), "h": {it["s"]: it["h"] for it in _m
           open(os.path.join(OUT, "market-hist.json"), "w"), separators=(",", ":"))
 if os.path.isdir("icons"):
     shutil.copytree("icons", os.path.join(OUT, "icons"), dirs_exist_ok=True)
+# Item details for the app's item sheet (keyed by item name) and the hunting maps.
+if game_items:
+    _info = {}
+    for _id, _v in sorted(game_items.items(), key=lambda kv: int(kv[0])):
+        if _v.get("n") and _v["n"] not in _info:
+            _info[_v["n"]] = dict({k: x for k, x in _v.items() if k != "n"}, id=int(_id))
+    json.dump(_info, open(os.path.join(OUT, "item-info.json"), "w", encoding="utf-8"), separators=(",", ":"), ensure_ascii=False)
+if hunt.get("mobs"):
+    os.makedirs(os.path.join(OUT, "hunt", "m"), exist_ok=True)
+    shutil.copy("data/hunt.json", os.path.join(OUT, "hunt", "index.json"))
+    for f in os.listdir("data/huntmaps"):
+        if f.endswith(".json"):
+            shutil.copy(os.path.join("data/huntmaps", f), os.path.join(OUT, "hunt", "m", f))
 if ADS_CLIENT:
     open(os.path.join(OUT, "ads.txt"), "w").write("google.com, %s, DIRECT, f08c47fec0942fa0\n" % ADS_CLIENT.replace("ca-", ""))
 
 home_title = "MapleCharts: MapleStory Classic World prices, NPC vs Free Market"
 home_desc = ("Every item in MapleStory Classic World: NPC shop price vs player Free Market price, price charts, "
              "the market index, NPC flips, crafting profits and calculators. Updated automatically.")
+home_title_he = "MapleCharts: מחירי NPC מול Free Market ב-MapleStory Classic World"
+home_desc_he = ("כל פריט ב-MapleStory Classic World: מחיר בחנות NPC מול המחיר בין שחקנים, גרפים, מדד השוק, "
+                "רווחים מ-NPC, מפות NPC ומפות ציד. מתעדכן אוטומטית.")
+
+
+def alternates(path):
+    """hreflang links between the English page and its Hebrew copy (path is relative to the site root)."""
+    return ('\n  <link rel="alternate" hreflang="en" href="%s%s">\n  <link rel="alternate" hreflang="he" href="%she/%s">'
+            '\n  <link rel="alternate" hreflang="x-default" href="%s%s">') % (SITE_URL, path, SITE_URL, path, SITE_URL, path)
+
+
 open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(
-    page("", head(home_title, home_desc, SITE_URL, SITE_URL + "og/home.png"), config("")))
+    page("", head(home_title, home_desc, SITE_URL, SITE_URL + "og/home.png", alternates("")), config("")))
+os.makedirs(os.path.join(OUT, "he"), exist_ok=True)
+open(os.path.join(OUT, "he", "index.html"), "w", encoding="utf-8").write(
+    page("../", head(home_title_he, home_desc_he, SITE_URL + "he/", SITE_URL + "og/home.png", alternates("")), config("../", lang="he"), lang="he"))
 open(os.path.join(OUT, "404.html"), "w", encoding="utf-8").write(
     page(ROOT_PATH, head(home_title, home_desc, SITE_URL, SITE_URL + "og/home.png"), config(ROOT_PATH)))
 
 for it in items:
+    path = "item/" + it["s"] + "/"
+    image = SITE_URL + "og/" + it["s"] + ".png"
     d = os.path.join(OUT, "item", it["s"])
     os.makedirs(d, exist_ok=True)
     title = "%s price · MapleStory Classic World | MapleCharts" % it["n"]
     desc = item_text(it)[:300] or "Prices for %s in MapleStory Classic World." % it["n"]
-    url = SITE_URL + "item/" + it["s"] + "/"
     open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(
-        page("../../", head(title, desc, url, SITE_URL + "og/" + it["s"] + ".png"), config("../../", it["s"]), seo_block(it), "p"))
+        page("../../", head(title, desc, SITE_URL + path, image, alternates(path)), config("../../", it["s"]), seo_block(it), "p"))
+    d = os.path.join(OUT, "he", "item", it["s"])
+    os.makedirs(d, exist_ok=True)
+    title = "מחיר %s ב-MapleStory Classic World | MapleCharts" % it["n"]
+    desc = item_text_he(it)[:300] or "מחירים של %s ב-MapleStory Classic World." % it["n"]
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(
+        page("../../../", head(title, desc, SITE_URL + "he/" + path, image, alternates(path)), config("../../../", it["s"], "he"),
+             seo_block(it, "he"), "p", "he"))
 
-urls = [(SITE_URL, updated_day, "1.0")] + [(SITE_URL + "item/" + it["s"] + "/", updated_day, "0.7") for it in items]
+urls = [(SITE_URL, updated_day, "1.0"), (SITE_URL + "he/", updated_day, "0.9")] + \
+    [(SITE_URL + "item/" + it["s"] + "/", updated_day, "0.7") for it in items] + \
+    [(SITE_URL + "he/item/" + it["s"] + "/", updated_day, "0.6") for it in items]
 open(os.path.join(OUT, "sitemap.xml"), "w").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     "".join("  <url><loc>%s</loc><lastmod>%s</lastmod><priority>%s</priority></url>\n" % (esc(u), m, pr) for u, m, pr in urls) +

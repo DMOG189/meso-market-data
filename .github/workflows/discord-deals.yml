@@ -1,0 +1,31 @@
+# Posts MapleCharts' daily deals (NPC flips, cheaper than NPC, weekly risers/fallers) to a Discord channel.
+# Needs the repository secret DISCORD_DEALS_WEBHOOK (Discord: channel settings -> Integrations -> Webhooks -> New webhook
+# -> Copy webhook URL). Without it the job only prints the message.
+name: Discord daily deals
+
+on:
+  schedule:
+    - cron: '41 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discord-deals
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the latest prices
+        run: |
+          git fetch --depth=1 origin data
+          git show FETCH_HEAD:market.json > market.json
+      - name: Post
+        env:
+          DISCORD_DEALS_WEBHOOK: ${{ secrets.DISCORD_DEALS_WEBHOOK }}
+        run: python3 tools/discord_deals.py market.json

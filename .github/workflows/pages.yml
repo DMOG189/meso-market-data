@@ -11,6 +11,8 @@ on:
       - 'tools/build_site.py'
       - 'site.config.json'
       - 'data/wiki.json'
+      - 'data/items.json'
+      - 'data/hunt.json'
       - 'icons/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
