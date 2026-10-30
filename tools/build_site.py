@@ -53,6 +53,9 @@ market = json.load(open(MARKET, encoding="utf-8"))
 wiki = json.load(open("data/wiki.json", encoding="utf-8")) if os.path.exists("data/wiki.json") else {"monsters": []}
 static = json.load(open(os.path.join(WEB, "items-static.json"), encoding="utf-8"))
 template = open(os.path.join(WEB, "template.html"), encoding="utf-8").read()
+_vm = re.search(r"app\.min\.js\?v=([0-9a-f]+)", template)
+APP_V = _vm.group(1) if _vm else ""
+SPLIT_I18N = os.path.exists(os.path.join(WEB, "i18n-en.js"))
 MAPS_V = ""
 if os.path.exists(os.path.join(WEB, "maps-data.js")):
     import hashlib
@@ -75,7 +78,11 @@ for lst in by_cat.values():
 
 
 def config(base, slug=None):
-    cfg = {"marketUrl": base + "market.json", "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
+    # The app first loads the price list without history (smaller), then the daily history right after.
+    cfg = {"marketUrl": base + "market-lite.json", "histUrl": base + "market-hist.json",
+           "pollMs": 300000, "base": base, "itemPaths": True, "siteUrl": SITE_URL, "sw": True}
+    if SPLIT_I18N:
+        cfg.update(i18nBase=base, v=APP_V)
     if os.path.isdir("icons"):
         cfg["iconBase"] = base + "icons/"
     if os.path.exists(os.path.join(WEB, "maps-data.js")):
@@ -185,6 +192,12 @@ for f in os.listdir(WEB):
     if os.path.isfile(src):
         shutil.copy(src, os.path.join(OUT, f))
 shutil.copy(MARKET, os.path.join(OUT, "market.json"))
+# Same prices in two parts: the list (no history) and the history per item slug.
+_m = json.load(open(MARKET, encoding="utf-8"))
+_lite = dict(_m, items=[{k: v for k, v in it.items() if k != "h"} for it in _m["items"]])
+json.dump(_lite, open(os.path.join(OUT, "market-lite.json"), "w"), separators=(",", ":"))
+json.dump({"updatedAt": _m.get("updatedAt"), "h": {it["s"]: it["h"] for it in _m["items"] if it.get("s") and it.get("h")}},
+          open(os.path.join(OUT, "market-hist.json"), "w"), separators=(",", ":"))
 if os.path.isdir("icons"):
     shutil.copytree("icons", os.path.join(OUT, "icons"), dirs_exist_ok=True)
 if ADS_CLIENT:
