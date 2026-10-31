@@ -321,6 +321,8 @@ json.dump({"updatedAt": _m.get("updatedAt"), "h": {it["s"]: it["h"] for it in _m
           open(os.path.join(OUT, "market-hist.json"), "w"), separators=(",", ":"))
 if os.path.isdir("icons"):
     shutil.copytree("icons", os.path.join(OUT, "icons"), dirs_exist_ok=True)
+if os.path.isdir("promo"):  # share image and a page that shows it (for social posts)
+    shutil.copytree("promo", os.path.join(OUT, "promo"), dirs_exist_ok=True)
 # Item details for the app's item sheet (keyed by item name) and the hunting maps.
 if game_items:
     _info = {}

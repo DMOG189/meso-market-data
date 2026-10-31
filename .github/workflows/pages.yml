@@ -14,6 +14,7 @@ on:
       - 'data/items.json'
       - 'data/hunt.json'
       - 'icons/**'
+      - 'promo/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
   schedule:
