@@ -1,6 +1,6 @@
 // MapleCharts offline support: keeps the app and the last prices so it opens without a connection.
-var CACHE = 'mc-97b9e7fb2f';
-var SHELL = ['./', './app.min.js?v=97b9e7fb2f', './app.min.css?v=97b9e7fb2f', './icon-192.png', './manifest.webmanifest'];
+var CACHE = 'mc-9eb101181a';
+var SHELL = ['./', './app.min.js?v=9eb101181a', './app.min.css?v=9eb101181a', './icon-192.png', './manifest.webmanifest'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
 });
