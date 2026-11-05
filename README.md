@@ -7,7 +7,7 @@ with price charts, a market index, NPC flips, crafting profits and calculators. 
 
 | Workflow | When | What it does |
 |---|---|---|
-| **Copy prices** | every 15 minutes | Copies the public price file from [maplestory-classic.com](https://maplestory-classic.com/market) to the `data` branch, and starts **Build site** when the prices changed. |
+| **Copy prices** | every 15 minutes | Copies the public price file from [maplestory-classic.com](https://maplestory-classic.com/market) to the `data` branch, and starts **Build site** when the prices changed. If the source is down it keeps the previous prices; run it by hand with *wait* (minutes) to keep checking until newer prices appear. |
 | **Wiki data** | every Monday | Collects NPC sell prices, potion recovery, scroll success rates, crafting recipes and monster drops from [MapleClassic Wiki](https://mapleclassic.wiki) (CC BY-NC-SA 4.0) into `data/wiki.json`. |
 | **Game data** | every Wednesday | Collects item details (requirements, stats, slots, potion effects, NPC sell price, description) into `data/items.json` and every map's monsters, platforms and portals into `data/hunt.json` + `data/huntmaps/`, from MapleStory Classic World's own game data via [maplestory.io](https://maplestory.io). |
 | **Discord daily deals** | every day | Posts the day's best NPC flips, items cheaper than the NPC and the week's movers to a Discord channel (`tools/discord_deals.py`). Needs the secret `DISCORD_DEALS_WEBHOOK`. |

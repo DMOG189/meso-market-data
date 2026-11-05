@@ -1,12 +1,19 @@
 # Checks the public Free Market price file on maplestory-classic.com every 15 minutes (so at least every hour)
 # and publishes it on the "data" branch, where any web page (like the Meso Market page on Wix)
 # can read it. Only the newest copy is kept, so the repository stays small.
+# Run it by hand with "wait" (minutes) to keep checking every 5 minutes until newer prices show up, e.g. while the
+# source site is down. When the source can't be reached the run ends quietly and keeps the previous prices.
 name: Copy prices
 
 on:
   schedule:
     - cron: '5,20,35,50 * * * *'
   workflow_dispatch:
+    inputs:
+      wait:
+        description: 'Keep checking every 5 minutes for up to this many minutes until newer prices appear (0 = check once)'
+        required: false
+        default: '0'
 
 permissions:
   contents: write
@@ -19,39 +26,71 @@ concurrency:
 jobs:
   copy:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 360
     steps:
-      - name: Download the price file
-        run: |
-          curl -fsSL --retry 3 --retry-delay 10 --max-time 90 \
-            -A "meso-market-relay (+https://github.com/${GITHUB_REPOSITORY})" \
-            -o market.json https://maplestory-classic.com/market.json
-
-      - name: Check the file
+      - name: Download and check the price file
         id: check
+        env:
+          WAIT_MINUTES: ${{ github.event.inputs.wait || '0' }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           python3 - <<'PY'
-          import json, os, urllib.request
-          data = json.load(open("market.json"))
-          items = data.get("items")
-          if not isinstance(items, list) or len(items) < 100 or "updatedAt" not in data:
-              raise SystemExit("The downloaded file does not look like the price list; keeping the previous copy.")
-          new = data["updatedAt"]
-          old = ""
-          url = "https://raw.githubusercontent.com/%s/data/meta.json" % os.environ["GITHUB_REPOSITORY"]
-          try:
-              with urllib.request.urlopen(url, timeout=20) as r:
-                  old = json.load(r).get("updatedAt", "")
-          except Exception:
-              pass
-          print("source updatedAt:", new, "| published copy:", old or "none", "| items:", len(items))
+          import json, os, time, urllib.request
+          SRC = "https://maplestory-classic.com/market.json"
+          UA = {"User-Agent": "meso-market-relay (+https://github.com/%s)" % os.environ["GITHUB_REPOSITORY"]}
+          wait = max(0, min(340, int(float(os.environ.get("WAIT_MINUTES") or 0))))
+          manual = os.environ.get("MANUAL") == "true"
+          deadline = time.time() + wait * 60
+
+          def published():
+              url = "https://raw.githubusercontent.com/%s/data/meta.json?t=%d" % (os.environ["GITHUB_REPOSITORY"], time.time())
+              try:
+                  with urllib.request.urlopen(url, timeout=20) as r:
+                      return json.load(r).get("updatedAt", "")
+              except Exception:
+                  return ""
+
+          def download():
+              for i in range(3):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(SRC, headers=UA), timeout=90) as r:
+                          raw = r.read()
+                      data = json.loads(raw)
+                      items = data.get("items")
+                      if isinstance(items, list) and len(items) >= 100 and "updatedAt" in data:
+                          return raw, data
+                      print("The downloaded file does not look like the price list.")
+                  except Exception as e:
+                      print("Could not get the price file:", e)
+                  time.sleep(10 * (i + 1))
+              return None, None
+
+          ok = changed = False
+          new = ""
+          while True:
+              raw, data = download()
+              if data:
+                  new, old = data["updatedAt"], published()
+                  ok, changed = True, new != old
+                  print("source updatedAt:", new, "| published copy:", old or "none", "| items:", len(data["items"]))
+                  open("market.json", "wb").write(raw)
+                  if changed or not wait:
+                      break
+              if time.time() + 300 > deadline:
+                  break
+              print("No newer prices yet; checking again in 5 minutes.")
+              time.sleep(300)
+          if not ok:
+              print("::notice::maplestory-classic.com could not be reached; the site keeps the previous prices.")
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("ok=%s\n" % ("true" if ok else "false"))
               out.write("updated_at=%s\n" % new)
-              out.write("changed=%s\n" % ("true" if new != old else "false"))
+              # A plain manual run (no waiting) republishes even when nothing changed, as before.
+              out.write("publish=%s\n" % ("true" if ok and (changed or (manual and not wait)) else "false"))
           PY
 
       - name: Publish to the data branch
-        if: steps.check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.check.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           UPDATED_AT: ${{ steps.check.outputs.updated_at }}
@@ -78,7 +117,7 @@ jobs:
           echo "Published prices from ${UPDATED_AT}"
 
       - name: Rebuild the website with the new prices
-        if: steps.check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.check.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --repo "${GITHUB_REPOSITORY}" --ref main
