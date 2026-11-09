@@ -237,7 +237,7 @@ begin
     -- Discord: buyers who posted with /buy, and /alert holders.
     insert into public.discord_outbox (discord_user_id, content)
     select distinct x.discord_user_id, '**' || new.item_name || '** is listed for ' || price_txt || ' mesos on MapleCharts' ||
-           coalesce(' by ' || new.discord_name, '') || '. https://dmog189.github.io/meso-market-data/item/' || new.item_slug || '/'
+           coalesce(' by ' || new.discord_name, '') || '. https://maplecharts.com/item/' || new.item_slug || '/'
     from (
       select l.discord_user_id from public.listings l
       where l.item_slug = new.item_slug and l.side = 'buy' and l.status = 'open' and l.expires_at > now()
@@ -257,7 +257,7 @@ begin
       and l.price <= new.price and l.user_id is not null and l.user_id is distinct from new.user_id;
     insert into public.discord_outbox (discord_user_id, content)
     select distinct l.discord_user_id, 'Someone wants to buy **' || new.item_name || '** for ' || price_txt || ' mesos on MapleCharts' ||
-           coalesce(' (' || new.discord_name || ')', '') || '. https://dmog189.github.io/meso-market-data/item/' || new.item_slug || '/'
+           coalesce(' (' || new.discord_name || ')', '') || '. https://maplecharts.com/item/' || new.item_slug || '/'
     from public.listings l
     where l.item_slug = new.item_slug and l.side = 'sell' and l.status = 'open' and l.expires_at > now()
       and l.price <= new.price and l.discord_user_id is not null and l.discord_user_id <> 'anon'
