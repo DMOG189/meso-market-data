@@ -15,8 +15,11 @@ MARKET = sys.argv[1] if len(sys.argv) > 1 else "market.json"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "_site"
 WEB = "web"
 CONF = json.load(open("site.config.json")) if os.path.exists("site.config.json") else {}
-SITE_URL = (os.environ.get("SITE_URL") or CONF.get("siteUrl") or "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
 SITE_DOMAIN = (os.environ.get("SITE_DOMAIN") or CONF.get("siteDomain") or "").strip()
+# With a custom domain (siteDomain, e.g. "maplecharts.com") the public address becomes https://<domain>/ and a CNAME file
+# is written for GitHub Pages. SITE_URL (env) still wins, for local tests.
+SITE_URL = (os.environ.get("SITE_URL") or ("https://%s/" % SITE_DOMAIN if SITE_DOMAIN else "") or CONF.get("siteUrl")
+            or "https://dmog189.github.io/meso-market-data/").rstrip("/") + "/"
 FONT = os.environ.get("OG_FONT", "")
 SUPABASE_URL = (os.environ.get("SUPABASE_URL") or CONF.get("supabaseUrl") or "").strip()
 SUPABASE_KEY = (os.environ.get("SUPABASE_ANON_KEY") or CONF.get("supabaseAnonKey") or "").strip()  # public "anon" key, meant for web pages
@@ -378,7 +381,66 @@ for it in items:
         page("../../../", head(title, desc, SITE_URL + "he/" + path, image, alternates(path)), config("../../../", it["s"], "he"),
              seo_block(it, "he"), "p", "he"))
 
-urls = [(SITE_URL, updated_day, "1.0"), (SITE_URL + "he/", updated_day, "0.9")] + \
+# ---------------------------------------------------------------- weekly market report (/report/, /he/report/)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import weekly_report
+report = weekly_report.build(market, static, wiki, low_data)
+RL = {
+    "en": {"title": "MapleStory Classic World market report: %s to %s", "h1": "Weekly market report",
+           "lead": "What moved in the Free Market from %s to %s. Player prices are daily medians from maplestory-classic.com; "
+                   "NPC prices from MapleClassic Wiki (CC BY-NC-SA 4.0).",
+           "risers": "Biggest risers", "fallers": "Biggest fallers", "traded": "Most traded", "flips": "Best NPC flips",
+           "crafts": "Best crafting profit", "sales": "%s sold", "flip": "NPC %s → players %s: +%s each", "craft": "%s, Lv. %d: cost %s, +%s",
+           "none": "Not enough sales this week.", "open": "Open MapleCharts"},
+    "he": {"title": "דוח השוק השבועי של MapleStory Classic World: %s עד %s", "h1": "דוח שוק שבועי",
+           "lead": "מה זז ב-Free Market מ-%s עד %s. מחירי השחקנים הם חציון יומי מ-maplestory-classic.com; "
+                   "מחירי NPC מ-MapleClassic Wiki (CC BY-NC-SA 4.0).",
+           "risers": "עלו הכי הרבה", "fallers": "ירדו הכי הרבה", "traded": "הכי נסחרים", "flips": "הכי משתלם לקנות מ-NPC ולמכור",
+           "crafts": "יצירה הכי רווחית", "sales": "%s נמכרו", "flip": "NPC %s ← שחקנים %s: ‎+%s ליחידה", "craft": "%s, רמה %d: עלות %s, ‎+%s",
+           "none": "לא היו מספיק מכירות השבוע.", "open": "לפתוח את MapleCharts"},
+}
+
+
+def report_block(lang):
+    T = RL[lang]
+    up = "../../" if lang == "he" else "../"
+    home = up + ("he/" if lang == "he" else "")
+    a, b = report["week"]
+
+    def link(r, text):
+        return '<a href="%sitem/%s/">%s</a>' % (home, esc(r["s"]), esc(text)) if r.get("s") else esc(text)
+
+    def lst(title, rows, fmt):
+        body = "".join("<li>%s</li>" % fmt(r) for r in rows) if rows else "<li>%s</li>" % esc(T["none"])
+        return '<h2>%s</h2><ol class="report-list">%s</ol>' % (esc(title), body)
+
+    chg = lambda r: '%s <span dir="ltr">%s → %s (%+g%%)</span>' % (link(r, r["n"]), num(r["from"]), num(r["to"]), r["pct"])
+    return ('<section id="seo-report" class="seo-item"><article class="panel seo-card">'
+            '<nav class="crumbs"><a href="%s">MapleCharts</a> › %s</nav><h1>%s</h1><p>%s</p>%s%s%s%s%s'
+            '<p><a class="btn" href="%s">%s</a></p></article></section>') % (
+        home, esc(T["h1"]), esc(T["h1"] + " · " + a + " – " + b), esc(T["lead"] % (a, b)),
+        lst(T["risers"], report["risers"], chg), lst(T["fallers"], report["fallers"], chg),
+        lst(T["traded"], report["traded"], lambda r: "%s · %s" % (link(r, r["n"]), esc(T["sales"] % num(r["sales"])))),
+        lst(T["flips"], report["flips"], lambda r: "%s · <span dir=\"ltr\">%s</span>" % (link(r, r["n"]), esc(T["flip"] % (num(r["npc"]), num(r["p"]), num(r["profit"]))))),
+        lst(T["crafts"], report["crafts"], lambda r: "%s · %s" % (link(r, r["n"]), esc(T["craft"] % (r["prof"], r["lvl"], num(r["cost"]), num(r["profit"]))))),
+        home, esc(T["open"]))
+
+
+_wa, _wb = report["week"]
+os.makedirs(os.path.join(OUT, "report"), exist_ok=True)
+open(os.path.join(OUT, "report", "index.html"), "w", encoding="utf-8").write(
+    page("../", head(RL["en"]["title"] % (_wa, _wb), RL["en"]["lead"] % (_wa, _wb), SITE_URL + "report/", SITE_URL + "og/report.png",
+                     alternates("report/")), config("../"), report_block("en"), "p"))
+os.makedirs(os.path.join(OUT, "he", "report"), exist_ok=True)
+open(os.path.join(OUT, "he", "report", "index.html"), "w", encoding="utf-8").write(
+    page("../../", head(RL["he"]["title"] % (_wa, _wb), RL["he"]["lead"] % (_wa, _wb), SITE_URL + "he/report/", SITE_URL + "og/report.png",
+                        alternates("report/")), config("../../", lang="he"), report_block("he"), "p", "he"))
+json.dump(report, open(os.path.join(OUT, "report", "report.json"), "w", encoding="utf-8"), separators=(",", ":"), ensure_ascii=False)
+# A draft post for Discord / Facebook groups (Daniel approves before anything is posted).
+open(os.path.join(OUT, "report", "post.txt"), "w", encoding="utf-8").write(weekly_report.post_text(report, SITE_URL))
+
+urls = [(SITE_URL, updated_day, "1.0"), (SITE_URL + "he/", updated_day, "0.9"),
+        (SITE_URL + "report/", updated_day, "0.8"), (SITE_URL + "he/report/", updated_day, "0.7")] + \
     [(SITE_URL + "item/" + it["s"] + "/", updated_day, "0.7") for it in items] + \
     [(SITE_URL + "he/item/" + it["s"] + "/", updated_day, "0.6") for it in items]
 open(os.path.join(OUT, "sitemap.xml"), "w").write(
@@ -458,6 +520,34 @@ if Image:
     ORANGE = ((166, 74, 0), (255, 233, 210))
     card("NPC shops vs Free Market", ("NPC shop", "Prices", GREEN[0], GREEN[1]), ("Players", "Charts", ORANGE[0], ORANGE[1]),
          "MapleStory Classic World · updated automatically", os.path.join(OUT, "og", "home.png"))
+    # Weekly report share image: top risers on the left, top fallers on the right.
+    im = base.copy()
+    d = ImageDraw.Draw(im)
+    for dx in range(-3, 4):
+        for dy in range(-3, 4):
+            d.text((90 + dx, 60 + dy), "MapleCharts", font=F_BRAND, fill=(196, 90, 0))
+    d.text((90, 60), "MapleCharts", font=F_BRAND, fill=(255, 255, 255))
+    d.rounded_rectangle([50, 150, W - 50, 580], radius=36, fill=(255, 253, 245), outline=(232, 211, 166), width=5)
+    d.text((90, 172), "Weekly market report · %s to %s" % tuple(report["week"]), font=F_LABEL, fill=(59, 42, 30))
+    F_ROW = font(27, 500)
+    for x, title, rows, col, bg in ((90, "Up this week", report["risers"][:4], (43, 122, 28), (226, 245, 216)),
+                                    (610, "Down this week", report["fallers"][:4], (166, 74, 0), (255, 233, 210))):
+        d.rounded_rectangle([x, 225, x + 500, 520], radius=26, fill=bg)
+        d.text((x + 26, 240), title, font=F_LABEL, fill=col)
+        for i, r in enumerate(rows):
+            name = r["n"]
+            while d.textlength(name, font=F_ROW) > 330 and len(name) > 4:
+                name = name[:-2]
+            if name != r["n"]:
+                name = name.rstrip() + "…"
+            y = 290 + i * 54
+            d.text((x + 26, y), name, font=F_ROW, fill=(59, 42, 30))
+            pct = "%+g%%" % r["pct"]
+            d.text((x + 474 - d.textlength(pct, font=F_ROW), y), pct, font=F_ROW, fill=col)
+    host = re.sub(r"^https?://", "", SITE_URL).split("/")[0]
+    d.text((W - 70 - d.textlength(host, font=F_LABEL), 590), host, font=F_LABEL, fill=(23, 61, 14))
+    im.quantize(colors=96, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(os.path.join(OUT, "og", "report.png"), optimize=True)
+
     for it in items:
         st, buy, sell, p = item_facts(it)
         left_label, left_val = ("NPC shop", num(buy[0])) if buy else (("NPC buys", num(sell)) if sell is not None else ("NPC shop", "—"))

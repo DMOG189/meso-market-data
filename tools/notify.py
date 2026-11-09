@@ -2,7 +2,9 @@
 
 1. Makes sure the web push keys exist (stored in the private app_secrets table on first run).
 2. When the player prices changed, turns triggered price alerts into notifications (at most once a day per alert).
-3. Sends web push for notifications that have not been pushed yet, and removes dead subscriptions.
+3. Discord: turns triggered /alert alerts into DMs and sends the queued DMs (discord_outbox). Needs DISCORD_BOT_TOKEN;
+   skipped without it. The bot can only DM people who share a server with it.
+4. Sends web push for notifications that have not been pushed yet, and removes dead subscriptions.
 
 Needs SUPABASE_URL and SUPABASE_SERVICE_KEY. Skips quietly when they are not set.
 Usage: python3 tools/notify.py market.json
@@ -85,7 +87,61 @@ if market_path and os.path.exists(market_path):
         rest("POST", "app_secrets", [{"name": "alerts_checked_for", "value": stamp}], prefer="resolution=merge-duplicates")
         print("Price alerts triggered:", sent)
 
-# ---------------------------------------------------------------- 3. web push
+# ---------------------------------------------------------------- 3. Discord DMs
+BOT = os.environ.get("DISCORD_BOT_TOKEN", "")
+
+
+def discord(method, path, body=None):
+    req = urllib.request.Request("https://discord.com/api/v10" + path, method=method, headers={
+        "Authorization": "Bot " + BOT, "Content-Type": "application/json",
+        "User-Agent": "MapleChartsBot (https://github.com/DMOG189/meso-market-data, 1)"})
+    with urllib.request.urlopen(req, data=json.dumps(body).encode() if body is not None else None, timeout=20) as r:
+        return json.loads(r.read().decode() or "null")
+
+
+if BOT:
+    if market_path and os.path.exists(market_path):
+        market = json.load(open(market_path))
+        stamp = market.get("updatedAt", "")
+        if secrets.get("discord_alerts_checked_for") != stamp:
+            prices = {it["s"]: it for it in market["items"] if it.get("s") and it.get("p") is not None}
+            day_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=23)
+            queued = 0
+            for a in rest("GET", "discord_alerts?active=is.true&select=id,discord_user_id,item_slug,item_name,direction,price,last_sent_at"):
+                it = prices.get(a["item_slug"])
+                if not it:
+                    continue
+                p = it["p"]
+                if not ((a["direction"] == "below" and p <= a["price"]) or (a["direction"] == "above" and p >= a["price"])):
+                    continue
+                if a.get("last_sent_at") and datetime.datetime.fromisoformat(a["last_sent_at"].replace("Z", "+00:00")) > day_ago:
+                    continue
+                rest("POST", "discord_outbox", {"discord_user_id": a["discord_user_id"], "content":
+                     "**%s** %s %s mesos (median player price today). Your alert: %s %s. %sitem/%s/" % (
+                         a["item_name"], "dropped to" if a["direction"] == "below" else "rose to", "{:,.0f}".format(p),
+                         a["direction"], "{:,.0f}".format(a["price"]), SITE_URL, a["item_slug"])})
+                rest("PATCH", "discord_alerts?id=eq.%d" % a["id"], {"last_sent_at": now_iso()})
+                queued += 1
+            rest("POST", "app_secrets", [{"name": "discord_alerts_checked_for", "value": stamp}], prefer="resolution=merge-duplicates")
+            print("Discord alerts triggered:", queued)
+    outbox = rest("GET", "discord_outbox?sent_at=is.null&select=id,discord_user_id,content&order=id&limit=100")
+    channels, sent_dm, failed_dm = {}, 0, 0
+    for m in outbox:
+        try:
+            ch = channels.get(m["discord_user_id"])
+            if not ch:
+                ch = channels[m["discord_user_id"]] = discord("POST", "/users/@me/channels", {"recipient_id": m["discord_user_id"]})["id"]
+            discord("POST", "/channels/%s/messages" % ch, {"content": m["content"][:1900], "allowed_mentions": {"parse": []}})
+            sent_dm += 1
+        except Exception as e:  # DMs closed, user left every shared server, rate limit…
+            failed_dm += 1
+            print("DM failed:", getattr(e, "code", e))
+        rest("PATCH", "discord_outbox?id=eq.%d" % m["id"], {"sent_at": now_iso()})
+    print("Discord DMs sent:", sent_dm, "| failed:", failed_dm)
+else:
+    print("DISCORD_BOT_TOKEN not set; Discord DMs skipped.")
+
+# ---------------------------------------------------------------- 4. web push
 since = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
 pending = rest("GET", "notifications?pushed_at=is.null&created_at=gt.%s&select=id,user_id,title,body,url&order=id&limit=500" % since)
 if not pending:

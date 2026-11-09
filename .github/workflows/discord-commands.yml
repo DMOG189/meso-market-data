@@ -1,4 +1,4 @@
-# Registers the MapleCharts Discord bot's /price command. Run it once by hand after creating the Discord application.
+# Registers the MapleCharts Discord bot's commands (tools/discord_commands.json: /price, /sell, /buy, /sold, /mylistings, /alert, /forget). Run it once by hand after creating the Discord application.
 # The application ID comes from site.config.json (discordAppId). Needs ONE of these secrets:
 #   DISCORD_CLIENT_SECRET (the same OAuth2 client secret used for "Sign in with Discord"), or
 #   DISCORD_BOT_TOKEN.
@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Register /price
+      - name: Register the commands
         env:
           APP_ID: ${{ secrets.DISCORD_APP_ID }}
           TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
@@ -36,5 +36,5 @@ jobs:
           fi
           curl -fsS -X PUT "https://discord.com/api/v10/applications/${APP_ID}/commands" \
             -H "Authorization: ${AUTH}" -H "Content-Type: application/json" \
-            -d '[{"name":"price","type":1,"description":"MapleStory Classic World price: players vs NPC shops","integration_types":[0,1],"contexts":[0,1,2],"options":[{"name":"item","description":"Item name","type":3,"required":true,"autocomplete":true}]}]' \
+            --data @tools/discord_commands.json \
             | python3 -c "import json,sys; print('Registered:', [c['name'] for c in json.load(sys.stdin)])"

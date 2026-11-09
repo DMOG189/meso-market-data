@@ -1,0 +1,203 @@
+[
+ {
+  "name": "price",
+  "type": 1,
+  "description": "MapleStory Classic World price: players vs NPC shops",
+  "integration_types": [
+   0,
+   1
+  ],
+  "contexts": [
+   0,
+   1,
+   2
+  ],
+  "options": [
+   {
+    "name": "item",
+    "description": "Item name",
+    "type": 3,
+    "required": true,
+    "autocomplete": true
+   }
+  ]
+ },
+ {
+  "name": "sell",
+  "type": 1,
+  "description": "Post a sell listing on the MapleCharts trade board (ends in 6-24 h)",
+  "options": [
+   {
+    "name": "item",
+    "description": "Item name",
+    "type": 3,
+    "required": true,
+    "autocomplete": true
+   },
+   {
+    "name": "price",
+    "description": "Price in mesos, e.g. 250k or 1.5m",
+    "type": 3,
+    "required": true
+   },
+   {
+    "name": "qty",
+    "description": "How many (default 1)",
+    "type": 4,
+    "min_value": 1,
+    "max_value": 100000
+   },
+   {
+    "name": "hours",
+    "description": "Hours until the listing ends: 6 to 24 (default 24)",
+    "type": 4,
+    "min_value": 6,
+    "max_value": 24
+   },
+   {
+    "name": "note",
+    "description": "Short note (no links or real-money talk)",
+    "type": 3,
+    "max_length": 140
+   }
+  ],
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0
+  ]
+ },
+ {
+  "name": "buy",
+  "type": 1,
+  "description": "Post a buy listing on the MapleCharts trade board (ends in 6-24 h)",
+  "options": [
+   {
+    "name": "item",
+    "description": "Item name",
+    "type": 3,
+    "required": true,
+    "autocomplete": true
+   },
+   {
+    "name": "price",
+    "description": "Price in mesos, e.g. 250k or 1.5m",
+    "type": 3,
+    "required": true
+   },
+   {
+    "name": "qty",
+    "description": "How many (default 1)",
+    "type": 4,
+    "min_value": 1,
+    "max_value": 100000
+   },
+   {
+    "name": "hours",
+    "description": "Hours until the listing ends: 6 to 24 (default 24)",
+    "type": 4,
+    "min_value": 6,
+    "max_value": 24
+   },
+   {
+    "name": "note",
+    "description": "Short note (no links or real-money talk)",
+    "type": 3,
+    "max_length": 140
+   }
+  ],
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0
+  ]
+ },
+ {
+  "name": "sold",
+  "type": 1,
+  "description": "Close one of your trade listings (or all)",
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0,
+   1
+  ],
+  "options": [
+   {
+    "name": "listing",
+    "description": "Which listing (empty = all)",
+    "type": 3,
+    "autocomplete": true
+   }
+  ]
+ },
+ {
+  "name": "mylistings",
+  "type": 1,
+  "description": "Your open MapleCharts trade listings",
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0,
+   1
+  ]
+ },
+ {
+  "name": "alert",
+  "type": 1,
+  "description": "DM me when an item goes under (or over) a price. Price 0 removes it.",
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0,
+   1
+  ],
+  "options": [
+   {
+    "name": "item",
+    "description": "Item name",
+    "type": 3,
+    "required": true,
+    "autocomplete": true
+   },
+   {
+    "name": "price",
+    "description": "Price in mesos, e.g. 250k (0 removes the alert)",
+    "type": 3,
+    "required": true
+   },
+   {
+    "name": "direction",
+    "description": "below (default) or above",
+    "type": 3,
+    "choices": [
+     {
+      "name": "below",
+      "value": "below"
+     },
+     {
+      "name": "above",
+      "value": "above"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name": "forget",
+  "type": 1,
+  "description": "Delete everything MapleCharts stored for your Discord account",
+  "integration_types": [
+   0
+  ],
+  "contexts": [
+   0,
+   1
+  ]
+ }
+]
