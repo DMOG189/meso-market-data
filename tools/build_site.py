@@ -322,6 +322,10 @@ _lite = dict(_m, items=[{k: v for k, v in it.items() if k != "h"} for it in _m["
 json.dump(_lite, open(os.path.join(OUT, "market-lite.json"), "w"), separators=(",", ":"))
 json.dump({"updatedAt": _m.get("updatedAt"), "h": {it["s"]: it["h"] for it in _m["items"] if it.get("s") and it.get("h")}},
           open(os.path.join(OUT, "market-hist.json"), "w"), separators=(",", ":"))
+# Events, sales and maintenance (tools/events_extract.py) and Facebook group asking prices (no seller details).
+for _f in ("events.json", "fb-prices.json"):
+    if os.path.exists(os.path.join("data", _f)):
+        shutil.copy(os.path.join("data", _f), os.path.join(OUT, _f))
 if os.path.isdir("icons"):
     shutil.copytree("icons", os.path.join(OUT, "icons"), dirs_exist_ok=True)
 if os.path.isdir("promo"):  # share image and a page that shows it (for social posts)

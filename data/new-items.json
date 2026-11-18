@@ -1,0 +1,149 @@
+{
+ "note": "Items added to MapleStory Classic World in an update that the wiki data does not list yet. build_wiki.py adds them to the app's known items (search shows them with 'no price yet'). Ids come from maplestory.io (older global data) when the same item exists there.",
+ "updates": [
+  {
+   "date": "2026-11-18",
+   "title": "November update: Forgotten Hollow",
+   "url": "https://www.nexon.com/maplestory/news/update/48255/november-update-forgotten-hollow-patch-notes",
+   "items": [
+    {
+     "n": "Yellow Mop",
+     "k": "e",
+     "id": 1442021
+    },
+    {
+     "n": "Indigo Mop",
+     "k": "e"
+    },
+    {
+     "n": "White Mop",
+     "k": "e",
+     "id": 1442022
+    },
+    {
+     "n": "Beige Umbrella",
+     "k": "e",
+     "id": 1302029
+    },
+    {
+     "n": "Green Umbrella",
+     "k": "e",
+     "id": 1302027
+    },
+    {
+     "n": "Light Purple Umbrella",
+     "k": "e",
+     "id": 1302028
+    },
+    {
+     "n": "Red Umbrella",
+     "k": "e",
+     "id": 1302025
+    },
+    {
+     "n": "Black Umbrella",
+     "k": "e",
+     "id": 1302026
+    },
+    {
+     "n": "Fairy Tapestry",
+     "k": "t"
+    },
+    {
+     "n": "Fairy Study Books",
+     "k": "t"
+    },
+    {
+     "n": "Glowspore Pendant Lights",
+     "k": "t"
+    },
+    {
+     "n": "Fairy Crystal Ball",
+     "k": "t"
+    },
+    {
+     "n": "Bamboo Sword",
+     "k": "e",
+     "id": 1302022
+    },
+    {
+     "n": "Newspaper Sword",
+     "k": "e",
+     "id": 1302024
+    },
+    {
+     "n": "Frying Pan",
+     "k": "e",
+     "id": 1322027
+    },
+    {
+     "n": "Plastic Bottle",
+     "k": "e",
+     "id": 1332021
+    },
+    {
+     "n": "Magical Destruction Bow",
+     "k": "e"
+    },
+    {
+     "n": "Blossom Antennae",
+     "k": "e"
+    },
+    {
+     "n": "Moonlight Antennae",
+     "k": "e"
+    },
+    {
+     "n": "Sprout Antennae",
+     "k": "e"
+    },
+    {
+     "n": "Moss Antennae",
+     "k": "e"
+    },
+    {
+     "n": "Firefly Earrings",
+     "k": "e"
+    },
+    {
+     "n": "Turkey Egg",
+     "k": "x"
+    },
+    {
+     "n": "Pumpkin Pie",
+     "k": "u",
+     "id": 2022113
+    },
+    {
+     "n": "Roasted Turkey",
+     "k": "u",
+     "id": 2020030
+    },
+    {
+     "n": "Gravy",
+     "k": "u",
+     "id": 2022264
+    },
+    {
+     "n": "Turkey Leg",
+     "k": "u",
+     "id": 2022634
+    },
+    {
+     "n": "Cranberry Sauce",
+     "k": "u",
+     "id": 2022262
+    },
+    {
+     "n": "Baby Turkey Carriage",
+     "k": "c",
+     "id": 1802042
+    },
+    {
+     "n": "Black Friday Mystery Fashion Crate",
+     "k": "c"
+    }
+   ]
+  }
+ ]
+}

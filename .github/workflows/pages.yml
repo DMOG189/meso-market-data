@@ -13,12 +13,17 @@ on:
       - 'data/wiki.json'
       - 'data/items.json'
       - 'data/hunt.json'
+      - 'data/events-manual.json'
+      - 'data/new-items.json'
+      - 'data/fb-prices.json'
+      - 'tools/events_extract.py'
       - 'icons/**'
       - 'promo/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
   schedule:
-    - cron: '27 5,17 * * *'
+    # every 6 hours: fresh prices page + Nexon events, sales and maintenance times
+    - cron: '27 */6 * * *'
 
 permissions:
   contents: read
@@ -47,6 +52,9 @@ jobs:
         run: pip install --quiet pillow==11.0.0
       - name: Get the Fredoka font (SIL Open Font License)
         run: curl -fsSL --retry 2 -o Fredoka.ttf "https://github.com/google/fonts/raw/main/ofl/fredoka/Fredoka%5Bwdth%2Cwght%5D.ttf" || echo "Font not available; share images use the system font."
+      - name: Events, sales and maintenance (Nexon posts + MapleClassic Wiki)
+        continue-on-error: true
+        run: python3 tools/events_extract.py data/events.json
       - name: Build the site
         run: OG_FONT=Fredoka.ttf python3 tools/build_site.py market.json _site
       - uses: actions/upload-pages-artifact@v3
