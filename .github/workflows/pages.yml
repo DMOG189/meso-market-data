@@ -17,6 +17,8 @@ on:
       - 'data/new-items.json'
       - 'data/fb-prices.json'
       - 'tools/events_extract.py'
+      - 'data/cash-shop-manual.json'
+      - 'tools/cash_shop_extract.py'
       - 'icons/**'
       - 'promo/**'
       - '.github/workflows/pages.yml'
@@ -55,6 +57,9 @@ jobs:
       - name: Events, sales and maintenance (Nexon posts + MapleClassic Wiki)
         continue-on-error: true
         run: python3 tools/events_extract.py data/events.json
+      - name: NX / Cash Shop items (in-game list + MapleClassic Wiki)
+        continue-on-error: true
+        run: python3 tools/cash_shop_extract.py data/cash-shop.json
       - name: Build the site
         run: OG_FONT=Fredoka.ttf python3 tools/build_site.py market.json _site
       - uses: actions/upload-pages-artifact@v3

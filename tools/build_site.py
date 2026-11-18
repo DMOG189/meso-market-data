@@ -323,7 +323,7 @@ json.dump(_lite, open(os.path.join(OUT, "market-lite.json"), "w"), separators=("
 json.dump({"updatedAt": _m.get("updatedAt"), "h": {it["s"]: it["h"] for it in _m["items"] if it.get("s") and it.get("h")}},
           open(os.path.join(OUT, "market-hist.json"), "w"), separators=(",", ":"))
 # Events, sales and maintenance (tools/events_extract.py) and Facebook group asking prices (no seller details).
-for _f in ("events.json", "fb-prices.json"):
+for _f in ("events.json", "fb-prices.json", "cash-shop.json"):
     if os.path.exists(os.path.join("data", _f)):
         shutil.copy(os.path.join("data", _f), os.path.join(OUT, _f))
 if os.path.isdir("icons"):

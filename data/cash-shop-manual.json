@@ -1,0 +1,316 @@
+{
+ "note": "NX / Cash Shop items. 'crates' = Mystery Fashion Crate rotations (items come only from the crate). The 18.11 list is from Daniel's in-game screenshots (Cash Shop > SPECIAL), names checked against Classic World game data (maplestory.io MCW). Earlier rotations and styles come from MapleClassic Wiki (CC BY-NC-SA 4.0); every entry links Nexon's post.",
+ "crates": [
+  {
+   "id": "mfc-2026-11-18",
+   "name": "Mystery Fashion Crate",
+   "start": "2026-11-18T18:00:00Z",
+   "end": "2026-12-02T07:59:00Z",
+   "endOrig": "Dec 2, 7:59 AM UTC",
+   "nx": 3500,
+   "bundle": {
+    "n": 11,
+    "nx": 35000,
+    "was": 38500
+   },
+   "lasts": "7 days",
+   "rates": null,
+   "url": "https://www.nexon.com/maplestory/news/sale/47857/classic-world-cash-shop-update-nov-18",
+   "source": "in-game Cash Shop (18.11)",
+   "items": [
+    {
+     "n": "Tania Tailored Jacket",
+     "id": 1047108,
+     "type": "Top"
+    },
+    {
+     "n": "Tania Bolero",
+     "id": 1047122,
+     "type": "Top"
+    },
+    {
+     "n": "Tania Tartan Pants",
+     "id": 1067085,
+     "type": "Bottom"
+    },
+    {
+     "n": "Tania Tartan Skirt",
+     "id": 1067101,
+     "type": "Bottom"
+    },
+    {
+     "n": "Tania En Fuego",
+     "id": 1077139,
+     "type": "Shoes"
+    },
+    {
+     "n": "Tania Gloves",
+     "id": 1087045,
+     "type": "Gloves"
+    },
+    {
+     "n": "Tania Cloak",
+     "id": 1107063,
+     "type": "Cape"
+    },
+    {
+     "n": "Tania Sword",
+     "id": 1702146,
+     "type": "Weapon cover",
+     "cover": "many weapon types"
+    },
+    {
+     "n": "Winged Cap",
+     "id": 1007304,
+     "type": "Hat"
+    },
+    {
+     "n": "Man's Shirts",
+     "id": 1057437,
+     "type": "Overall"
+    },
+    {
+     "n": "Orange Hooded Zip-Up",
+     "id": 1047148,
+     "type": "Top"
+    },
+    {
+     "n": "Light Blue Ripped Jeans",
+     "id": 1067142,
+     "type": "Bottom"
+    },
+    {
+     "n": "Dragonfly Wings",
+     "id": 1107041,
+     "type": "Cape"
+    },
+    {
+     "n": "Penguin Slippers",
+     "id": 1077120,
+     "type": "Shoes"
+    },
+    {
+     "n": "Tweed Headband",
+     "id": 1007376,
+     "type": "Hat"
+    },
+    {
+     "n": "Prep Uniform",
+     "id": 1057168,
+     "type": "Overall"
+    },
+    {
+     "n": "Prep School Uniform",
+     "id": 1047104,
+     "type": "Top"
+    },
+    {
+     "n": "Prep School Uniform Pants",
+     "id": 1067083,
+     "type": "Bottom"
+    },
+    {
+     "n": "Pre-School Pants",
+     "id": 1067044,
+     "type": "Bottom"
+    },
+    {
+     "n": "Blue Book Bag",
+     "id": 1107038,
+     "type": "Cape"
+    },
+    {
+     "n": "White Tiger Hat",
+     "id": 1007341,
+     "type": "Hat"
+    },
+    {
+     "n": "Moon Bunny Headgear",
+     "id": 1007366,
+     "type": "Hat"
+    },
+    {
+     "n": "Moon Bunny Costume",
+     "id": 1057317,
+     "type": "Overall"
+    },
+    {
+     "n": "Moon Bunny Paws",
+     "id": 1077124,
+     "type": "Shoes"
+    },
+    {
+     "n": "Moon Bunny Gloves",
+     "id": 1087040,
+     "type": "Gloves"
+    },
+    {
+     "n": "Red Hip Hop",
+     "id": 1057298,
+     "type": "Overall"
+    },
+    {
+     "n": "Monotone Jacket",
+     "id": 1047221,
+     "type": "Top"
+    },
+    {
+     "n": "Skull Shirt",
+     "id": 1047164,
+     "type": "Top"
+    },
+    {
+     "n": "Muscle Man T",
+     "id": 1047107,
+     "type": "Top"
+    },
+    {
+     "n": "Jewel Chain Jeans",
+     "id": 1067146,
+     "type": "Bottom"
+    },
+    {
+     "n": "Blue Aviator Shades",
+     "id": 1027016,
+     "type": "Eye accessory"
+    },
+    {
+     "n": "5 O'Clock Shadow",
+     "id": 1017019,
+     "type": "Face accessory"
+    },
+    {
+     "n": "Beaded Cross Earrings",
+     "id": 1037007,
+     "type": "Earrings"
+    },
+    {
+     "n": "Angelic Ribbon",
+     "id": 1007219,
+     "type": "Hat"
+    },
+    {
+     "n": "Strawberry Milk Frill Bonnet",
+     "id": 1007207,
+     "type": "Hat"
+    },
+    {
+     "n": "Strawberry Milk Dress",
+     "id": 1057203,
+     "type": "Overall"
+    },
+    {
+     "n": "Strawberry Shoes",
+     "id": 1077179,
+     "type": "Shoes"
+    },
+    {
+     "n": "Leopard Print Hat",
+     "id": 1007196,
+     "type": "Hat"
+    },
+    {
+     "n": "Leopard Print Coat",
+     "id": 1057182,
+     "type": "Overall"
+    },
+    {
+     "n": "Leopard Print Shoes",
+     "id": 1077084,
+     "type": "Shoes"
+    },
+    {
+     "n": "Red Loose-Fit Beanie",
+     "id": 1007522,
+     "type": "Hat"
+    },
+    {
+     "n": "Rising Star Baggy Digs",
+     "id": 1057400,
+     "type": "Overall"
+    },
+    {
+     "n": "Booster Shoes",
+     "id": 1077125,
+     "type": "Shoes"
+    },
+    {
+     "n": "Moon and Sun Cape",
+     "type": "Cape",
+     "note": "not in the game data yet"
+    },
+    {
+     "n": "Sky Rider Jacket",
+     "id": 1047218,
+     "type": "Top"
+    },
+    {
+     "n": "Denim Cargos",
+     "id": 1067029,
+     "type": "Bottom"
+    },
+    {
+     "n": "Pink Sweater",
+     "id": 1047244,
+     "type": "Top"
+    },
+    {
+     "n": "Pink Layered Skirt",
+     "id": 1067096,
+     "type": "Bottom"
+    },
+    {
+     "n": "White Toy Shades",
+     "id": 1027025,
+     "type": "Eye accessory"
+    },
+    {
+     "n": "Yo Yo",
+     "id": 1702239,
+     "type": "Weapon cover",
+     "cover": "any weapon"
+    }
+   ]
+  }
+ ],
+ "sales": [
+  {
+   "n": "Regular Store Permit (90 days)",
+   "nx": 100,
+   "was": 1500,
+   "end": "2026-12-09",
+   "endOrig": "start of the Dec 9 maintenance",
+   "note": "once per world",
+   "url": "https://www.nexon.com/maplestory/news/sale/47857/classic-world-cash-shop-update-nov-18"
+  },
+  {
+   "n": "Beauty Essentials Pack",
+   "nx": 5900,
+   "was": 12500,
+   "note": "once per world, no end date",
+   "url": "https://www.nexon.com/maplestory/news/sale/47857/classic-world-cash-shop-update-nov-18"
+  },
+  {
+   "n": "10-day equip covers",
+   "nx": "700-1,200",
+   "note": "until further notice",
+   "url": "https://www.nexon.com/maplestory/news/sale/47857/classic-world-cash-shop-update-nov-18"
+  }
+ ],
+ "styles": [
+  {
+   "kind": "skin",
+   "coupon": "Signature Skin Color Coupon",
+   "nx": 2000,
+   "start": "2026-11-18",
+   "names": {
+    "any": [
+     "Alabaster",
+     "Clay",
+     "Green"
+    ]
+   },
+   "url": "https://www.nexon.com/maplestory/news/sale/47857/classic-world-cash-shop-update-nov-18"
+  }
+ ]
+}
